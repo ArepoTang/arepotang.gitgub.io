@@ -201,12 +201,6 @@ html, body {
   transition: background 0.25s;
 }
 #menu-list a:hover { background: rgba(79,195,247,0.1); }
-/* 蓝星随机抽中的那条 */
-#menu-list a.picked {
-  background: rgba(79,195,247,0.14);
-  box-shadow: inset 0 0 0 1px rgba(79,195,247,0.35);
-  color: #bfe6ff;
-}
 
 /* ===== 开屏引导：黑磨砂 + 蓝色星星指示 + 底部按钮 ===== */
 #guide {
@@ -341,19 +335,22 @@ html, body {
     '定位Jebediah Kerman...',
   ];
 
-  function renderMenu() {
-    for (const text of MENU) {
-      const li = document.createElement('li');
-      const a = document.createElement('a');
-      a.className = 'item';
-      a.href = '#';
-      a.addEventListener('click', (e) => e.preventDefault());
-      a.textContent = text;
-      li.appendChild(a);
-      menuList.appendChild(li);
-    }
+  // 每次只显示一条（随机抽签）
+  function openMenu(pick) {
+    const idx = typeof pick === 'number' ? pick : nextPick();
+    menuList.innerHTML = '';
+    const li = document.createElement('li');
+    const a = document.createElement('a');
+    a.className = 'item';
+    a.href = '#';
+    a.addEventListener('click', (e) => e.preventDefault());
+    a.textContent = MENU[idx];
+    li.appendChild(a);
+    menuList.appendChild(li);
+
+    modal.classList.remove('hide');
+    requestAnimationFrame(() => modal.classList.add('show'));
   }
-  renderMenu();
 
   // 抽签袋：一轮里每个条目各抽到一次才重洗 → 前 N 次点击不重样
   let bag = [];
@@ -373,19 +370,6 @@ html, body {
     }
     lastPick = bag.pop();
     return lastPick;
-  }
-
-  function openMenu(pick) {
-    modal.classList.remove('hide');
-    requestAnimationFrame(() => {
-      modal.classList.add('show');
-      const picked = menuList.children[pick] && menuList.children[pick].firstChild;
-      menuList.querySelectorAll('.picked').forEach((el) => el.classList.remove('picked'));
-      if (picked) {
-        picked.classList.add('picked');
-        picked.scrollIntoView({ block: 'nearest' });
-      }
-    });
   }
 
   function closeMenu() {
@@ -420,7 +404,7 @@ html, body {
   // 蓝星轨道半径带：绕左上角转，但取“过屏幕中部”的那一圈（屏心距左上角 = 0.5×对角线）
   const EGG_R_MIN = 0.40, EGG_R_MAX = 0.62;
   const INTRO_MS = 5000;       // 开屏星轨最短时长，蓝星出现后定格
-  const GUIDE_AUTO_MS = 5000;  // 黑磨砂定格时长，到点自动恢复
+  const GUIDE_AUTO_MS = 2500;  // 黑磨砂定格时长，到点自动恢复
 
   // 随机挑 2~3 颗当蓝星，强制包含第 0 颗 → 不会整轮没蓝星
   const eggIdx = new Set([0]);
@@ -632,12 +616,12 @@ html, body {
   }
 
   canvas.addEventListener('click', (e) => {
-    if (hitTest(e.clientX, e.clientY)) openMenu(nextPick());
+    if (hitTest(e.clientX, e.clientY)) openMenu();
   });
 
   canvas.addEventListener('touchstart', (e) => {
     if (e.touches.length > 0 && hitTest(e.touches[0].clientX, e.touches[0].clientY)) {
-      openMenu(nextPick());
+      openMenu();
     }
   }, { passive: true });
 
