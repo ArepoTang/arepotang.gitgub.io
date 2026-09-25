@@ -453,7 +453,8 @@ html, body {
   const EGG_MIN = 5, EGG_MAX = 8;       // 蓝星数量（每轮必有）
   // 蓝星轨道半径带：绕左上角转，但取“过屏幕中部”的那一圈（屏心距左上角 = 0.5×对角线）
   const EGG_R_MIN = 0.40, EGG_R_MAX = 0.62;
-  const INTRO_MS = 2500;       // 开屏星轨最短时长，蓝星出现后定格
+  const INTRO_MS = 1200;       // 开屏星轨最短时长，蓝星出现后定格
+  const STAR_DELAY_MS = 900;   // 各星推迟出现的最大延迟
   const GUIDE_AUTO_MS = 5000;  // 黑磨砂定格时长，到点自动恢复
 
   // 随机挑 2~3 颗当蓝星，强制包含第 0 颗 → 不会整轮没蓝星
@@ -476,7 +477,7 @@ html, body {
       size: isEaster ? 2 + Math.random() * 1 : 0.5 + Math.random() * 0.8,
       color: isEaster ? EASTER_EGG_COLOR : '#ffffff',
       isEasterEgg: isEaster,
-      delay: Math.random() * 2.8,
+      delay: Math.random() * (STAR_DELAY_MS / 1000),
       trail: []      // {x, y, age}
     });
   }
