@@ -272,6 +272,100 @@ html, body {
 .spot.main::after { inset: -13px; border-color: rgba(79,195,247,0.85); }
 
 
+/* ===== 项目详情页（锚点 #id）===== */
+#page {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+#page.hide { display: none; }
+#page .frost { transition-duration: 0.35s; }
+#page.show .frost { opacity: 1; }
+
+#page-back {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.75);
+  font-size: 16px;
+  line-height: 1;
+  font-family: inherit;
+  padding: 0;
+  cursor: pointer;
+  outline: none;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  transition: background 0.25s, border-color 0.25s, color 0.25s;
+  -webkit-tap-highlight-color: transparent;
+}
+#page-back:hover {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.35);
+  color: #fff;
+}
+
+.page-inner {
+  position: absolute;
+  inset: 0;
+  max-width: 620px;
+  margin: 0 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 92px 28px calc(48px + env(safe-area-inset-bottom, 0px));
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+#page.show .page-inner {
+  opacity: 1;
+  transform: none;
+}
+#page-title {
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: rgba(255,255,255,0.92);
+}
+#page-desc {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 300;
+  letter-spacing: 1px;
+  color: rgba(255,255,255,0.45);
+}
+#page-desc[hidden] { display: none; }
+#page-body p {
+  margin-top: 20px;
+  font-size: 14px;
+  font-weight: 300;
+  line-height: 1.9;
+  color: rgba(255,255,255,0.68);
+}
+#page-link {
+  display: inline-block;
+  margin-top: 28px;
+  padding: 11px 20px;
+  border-radius: 999px;
+  border: 1px solid rgba(79,195,247,0.4);
+  background: rgba(79,195,247,0.08);
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  color: #bfe6ff;
+  text-decoration: none;
+  word-break: break-all;
+  transition: background 0.25s, border-color 0.25s;
+}
+#page-link:hover {
+  background: rgba(79,195,247,0.16);
+  border-color: rgba(79,195,247,0.75);
+}
+#page-link[hidden] { display: none; }
+
 /* ===== 触摸设备：按钮默认可见度稍高 ===== */
 @media (hover: none) {
   #float-btn.visible { opacity: 0.55; }
@@ -303,6 +397,17 @@ html, body {
   <div id="markers"></div>
 </div>
 
+<div id="page" class="hide">
+  <div class="frost"></div>
+  <button id="page-back" aria-label="返回">←</button>
+  <div class="page-inner">
+    <h1 id="page-title"></h1>
+    <div id="page-desc" hidden></div>
+    <div id="page-body"></div>
+    <a id="page-link" hidden target="_blank" rel="noopener"></a>
+  </div>
+</div>
+
 <script>
 (function() {
   'use strict';
@@ -318,11 +423,11 @@ html, body {
   const modalTitle = document.getElementById('modal-title');
   const modalList = document.getElementById('modal-list');
 
-  // 汉堡菜单的内容：项目导航
+  // 汉堡菜单的内容：项目导航（详情页内容全在 body 里，空的就先不渲染）
   const PROJECTS = [
-    { text: 'phi',     desc: '半调海报 App',    href: 'https://gitee.com/a231216/phi' },
-    { text: 'lambda',  desc: 'halftone 命令行', href: '' },
-    { text: 'epsilon', desc: 'poster 命令行',   href: '' },
+    { id: 'phi',     text: 'phi',     desc: '半调海报 App',    href: 'https://gitee.com/a231216/phi', body: [] },
+    { id: 'lambda',  text: 'lambda',  desc: 'halftone 命令行', href: '', body: [] },
+    { id: 'epsilon', text: 'epsilon', desc: 'poster 命令行',   href: '', body: [] },
   ];
 
   // 蓝星彩蛋的池子（每次只抽一条）
@@ -351,7 +456,7 @@ html, body {
   ];
 
   // ===== 弹窗系统：openModal(标题, 条目[]) =====
-  // 条目 = { text, desc?, href? }；href 为空则只展示、不跳转；标题为空则不显示标题
+  // 条目 = { text, desc?, hash?, href? }；hash 走锚点，href 开新窗口，两者都没则只展示；标题为空则不显示标题
   function openModal(title, items) {
     modalTitle.textContent = title || '';
     modalTitle.hidden = !title;
@@ -363,7 +468,9 @@ html, body {
       const li = document.createElement('li');
       const a = document.createElement('a');
       a.className = 'item';
-      if (item.href) {
+      if (item.hash) {
+        a.href = item.hash;
+      } else if (item.href) {
         a.href = item.href;
         a.target = '_blank';
         a.rel = 'noopener';
@@ -392,9 +499,13 @@ html, body {
     requestAnimationFrame(() => modal.classList.add('show'));
   }
 
-  // 汉堡按钮：整份项目导航
+  // 汉堡按钮：整份项目导航（每条指向 #id 的详情页）
   function openMenu() {
-    openModal('项目导航', PROJECTS);
+    openModal('项目导航', PROJECTS.map((p) => ({
+      text: p.text,
+      desc: p.desc,
+      hash: '#' + p.id,
+    })));
   }
 
   // 蓝星：抽一条彩蛋，只显示那一条
@@ -427,6 +538,58 @@ html, body {
     modal.classList.remove('show');
     setTimeout(() => modal.classList.add('hide'), 350);
   }
+
+  // ===== 项目详情页：锚点路由 =====
+  const page = document.getElementById('page');
+  const pageInner = page.querySelector('.page-inner');
+  const pageTitle = document.getElementById('page-title');
+  const pageDesc = document.getElementById('page-desc');
+  const pageBody = document.getElementById('page-body');
+  const pageLink = document.getElementById('page-link');
+  const pageBack = document.getElementById('page-back');
+
+  function showPage(p) {
+    pageTitle.textContent = p.text;
+    pageDesc.textContent = p.desc || '';
+    pageDesc.hidden = !p.desc;
+
+    pageBody.innerHTML = '';
+    for (const para of p.body || []) {
+      const el = document.createElement('p');
+      el.textContent = para;
+      pageBody.appendChild(el);
+    }
+
+    pageLink.hidden = !p.href;
+    if (p.href) {
+      pageLink.href = p.href;
+      pageLink.textContent = p.href;
+    }
+
+    pageInner.scrollTop = 0;
+    page.classList.remove('hide');
+    requestAnimationFrame(() => page.classList.add('show'));
+  }
+
+  function hidePage() {
+    if (page.classList.contains('hide')) return;
+    page.classList.remove('show');
+    setTimeout(() => page.classList.add('hide'), 350);
+  }
+
+  function route() {
+    const p = PROJECTS.find((x) => x.id === location.hash.slice(1));
+    if (!p) { hidePage(); return; }
+    closeMenu();
+    showPage(p);
+  }
+
+  pageBack.addEventListener('click', () => {
+    if (location.hash) location.hash = '';
+    else hidePage();
+  });
+  window.addEventListener('hashchange', route);
+  route();
 
   let W, H, cx = 0, cy = 0;
 
