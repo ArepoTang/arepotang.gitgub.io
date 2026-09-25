@@ -476,6 +476,7 @@ html, body {
 }
 #page-body h2 { margin: 28px 0 10px; font-size: 17px; font-weight: 600; letter-spacing: 1px; }
 #page-body h3 { margin: 22px 0 8px; font-size: 15px; font-weight: 600; }
+#page-body h4 { margin: 20px 0 8px; font-size: 14px; font-weight: 600; }
 #page-body ul, #page-body ol { margin: 16px 0 0 22px; }
 #page-body li { margin-top: 6px; font-size: 14px; font-weight: 300; line-height: 1.8; }
 #page-body blockquote {
@@ -743,7 +744,78 @@ pkg install -y python-opencv python-pillow</code></pre>
   <li>祝你安装顺利 =）</li>
 </ol>
     </div>
-    <div class="out" data-out="pc">BBBB</div>
+    <div class="out" data-out="pc">
+<h4>Windows</h4>
+<ol>
+  <li>安装 Python<br><a href="https://www.python.org/downloads/release/pymanager-263/" target="_blank" rel="noopener">https://www.python.org/downloads/release/pymanager-263/</a></li>
+  <li>安装 Git<br><a href="https://git-scm.com/download/win" target="_blank" rel="noopener">https://git-scm.com/download/win</a></li>
+  <li>在你想要的文件夹中打开 Powershell 运行
+<pre><code>git clone https://gitee.com/a231216/epsilon.git
+git clone https://gitee.com/a231216/lambda.git
+pip install numpy opencv pillow</code></pre>
+  </li>
+  <li>调用程序，详见 readme</li>
+</ol>
+<h4>Linux</h4>
+<ol>
+  <li>安装 Python、pip、venv、Git，根据你的发行版选一条：
+    <p>Ubuntu / Debian：</p>
+<pre><code>sudo apt update
+sudo apt install -y python3 python3-pip python3-venv git</code></pre>
+    <p>Fedora：</p>
+<pre><code>sudo dnf install -y python3 python3-pip git</code></pre>
+    <p>Arch Linux：</p>
+<pre><code>sudo pacman -S --needed python python-pip git</code></pre>
+    <p>openSUSE：</p>
+<pre><code>sudo zypper install -y python3 python3-pip git</code></pre>
+  </li>
+  <li>在你想要的文件夹中打开终端，运行：
+<pre><code>git clone https://gitee.com/a231216/epsilon.git
+git clone https://gitee.com/a231216/lambda.git</code></pre>
+  </li>
+  <li>创建虚拟环境并安装依赖，推荐这样做：
+<pre><code>python3 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+pip install numpy opencv-python pillow</code></pre>
+    <p>如果不需要图形界面，可以把 opencv-python 换成：</p>
+<pre><code>pip install opencv-python-headless</code></pre>
+  </li>
+  <li>调用程序，详见 readme。通常需要先进入对应仓库目录，例如：
+<pre><code>cd epsilon
+# 或
+cd lambda</code></pre>
+    然后按 readme 里的命令运行。
+  </li>
+</ol>
+<hr>
+<h4>macOS</h4>
+<ol>
+  <li>安装 Homebrew（如果还没装），打开终端运行：
+<pre><code>/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"</code></pre>
+  </li>
+  <li>安装 Python 和 Git
+<pre><code>brew install python git</code></pre>
+    <p>macOS 一般自带 Git，但用 Homebrew 安装也没问题。</p>
+  </li>
+  <li>在你想要的文件夹中打开终端，运行：
+<pre><code>git clone https://gitee.com/a231216/epsilon.git
+git clone https://gitee.com/a231216/lambda.git</code></pre>
+  </li>
+  <li>创建虚拟环境并安装依赖：
+<pre><code>python3 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+pip install numpy opencv-python pillow</code></pre>
+  </li>
+  <li>调用程序，详见 readme，例如：
+<pre><code>cd epsilon
+# 或
+cd lambda</code></pre>
+    然后按 readme 里的说明运行。
+  </li>
+</ol>
+    </div>
     <div class="out" data-out="portable">CCCC</div>
   </div>
 </div>
