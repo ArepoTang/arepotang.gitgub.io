@@ -188,19 +188,26 @@ html, body {
   color: rgba(255,255,255,0.35);
   margin-bottom: 12px;
 }
-#menu-list { list-style: none; }
-#menu-list a {
+.modal-title[hidden] { display: none; }
+#modal-list { list-style: none; }
+#modal-list a {
   display: block;
-  padding: 12px 12px;
+  padding: 12px;
   margin: 0 -12px;
   border-radius: 12px;
-  font-size: 14px;
-  line-height: 1.6;
   color: rgba(255,255,255,0.88);
   text-decoration: none;
   transition: background 0.25s;
 }
-#menu-list a:hover { background: rgba(79,195,247,0.1); }
+#modal-list a:hover { background: rgba(79,195,247,0.1); }
+#modal-list .item-name { font-size: 15px; letter-spacing: 0.5px; line-height: 1.6; }
+#modal-list .item-desc {
+  font-size: 12px;
+  font-weight: 300;
+  letter-spacing: 0.5px;
+  color: rgba(255,255,255,0.4);
+  margin-top: 3px;
+}
 
 /* ===== 开屏引导：黑磨砂 + 蓝色星星指示 + 底部按钮 ===== */
 #guide {
@@ -282,12 +289,12 @@ html, body {
 
 <button id="float-btn" aria-label="菜单"></button>
 
-<div id="modal" class="hide" role="dialog" aria-modal="true" aria-label="项目导航">
+<div id="modal" class="hide" role="dialog" aria-modal="true">
   <div class="frost"></div>
   <div class="modal-panel">
     <button id="modal-close" aria-label="关闭"></button>
-    <div class="modal-title">项目导航</div>
-    <ul id="menu-list"></ul>
+    <div class="modal-title" id="modal-title" hidden></div>
+    <ul id="modal-list"></ul>
   </div>
 </div>
 
@@ -308,10 +315,18 @@ html, body {
   const markers = document.getElementById('markers');
   const modal = document.getElementById('modal');
   const modalClose = document.getElementById('modal-close');
-  const menuList = document.getElementById('menu-list');
+  const modalTitle = document.getElementById('modal-title');
+  const modalList = document.getElementById('modal-list');
 
-  // 弹窗列表条目（纯文本，将来要跳转就改成 { text, href }）
-  const MENU = [
+  // 汉堡菜单的内容：项目导航
+  const PROJECTS = [
+    { text: 'phi',     desc: '半调海报 App',    href: 'https://gitee.com/a231216/phi' },
+    { text: 'lambda',  desc: 'halftone 命令行', href: '' },
+    { text: 'epsilon', desc: 'poster 命令行',   href: '' },
+  ];
+
+  // 蓝星彩蛋的池子（每次只抽一条）
+  const EGG_LINES = [
     '此处祥和安稳——比最初的时刻热闹了许多。',
     '受邀前来的人们都有着属于自己的一隅之地。有的人乐于精心布置，而有的人更偏好简单朴素。',
     '它曾经历许多，并非一尘不染，但依旧八角硬朗，普通地整洁着。',
@@ -335,43 +350,65 @@ html, body {
     '定位Jebediah Kerman...',
   ];
 
-  function makeItem(text) {
-    const li = document.createElement('li');
-    const a = document.createElement('a');
-    a.className = 'item';
-    a.href = '#';
-    a.addEventListener('click', (e) => e.preventDefault());
-    a.textContent = text;
-    li.appendChild(a);
-    return li;
-  }
+  // ===== 弹窗系统：openModal(标题, 条目[]) =====
+  // 条目 = { text, desc?, href? }；href 为空则只展示、不跳转；标题为空则不显示标题
+  function openModal(title, items) {
+    modalTitle.textContent = title || '';
+    modalTitle.hidden = !title;
+    if (title) modal.setAttribute('aria-label', title);
+    else modal.removeAttribute('aria-label');
+    modalList.innerHTML = '';
 
-  function showModal() {
+    for (const item of items) {
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.className = 'item';
+      if (item.href) {
+        a.href = item.href;
+        a.target = '_blank';
+        a.rel = 'noopener';
+      } else {
+        a.href = '#';
+        a.addEventListener('click', (e) => e.preventDefault());
+      }
+
+      const name = document.createElement('div');
+      name.className = 'item-name';
+      name.textContent = item.text;
+      a.appendChild(name);
+
+      if (item.desc) {
+        const desc = document.createElement('div');
+        desc.className = 'item-desc';
+        desc.textContent = item.desc;
+        a.appendChild(desc);
+      }
+
+      li.appendChild(a);
+      modalList.appendChild(li);
+    }
+
     modal.classList.remove('hide');
     requestAnimationFrame(() => modal.classList.add('show'));
   }
 
-  // 汉堡菜单：整份项目导航
+  // 汉堡按钮：整份项目导航
   function openMenu() {
-    menuList.innerHTML = '';
-    for (const text of MENU) menuList.appendChild(makeItem(text));
-    showModal();
+    openModal('项目导航', PROJECTS);
   }
 
-  // 蓝星彩蛋：只显示抽中的那一条
+  // 蓝星：抽一条彩蛋，只显示那一条
   function openEgg() {
-    menuList.innerHTML = '';
-    menuList.appendChild(makeItem(MENU[nextPick()]));
-    showModal();
+    openModal('', [{ text: EGG_LINES[nextPick()] }]);
   }
 
-  // 抽签袋：一轮里每个条目各抽到一次才重洗 → 前 N 次点击不重样
+  // 抽签袋：一轮里每条各抽到一次才重洗 → 前 N 次点击不重样
   let bag = [];
   let lastPick = -1;
 
   function nextPick() {
     if (!bag.length) {
-      bag = MENU.map((_, i) => i);
+      bag = EGG_LINES.map((_, i) => i);
       for (let i = bag.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [bag[i], bag[j]] = [bag[j], bag[i]];
