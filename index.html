@@ -388,6 +388,7 @@ html, body {
   const MAX_TRAIL_AGE = 2.0;   // 秒 — 每条轨迹点的最大寿命
   const EASTER_EGG_COLOR = '#4FC3F7';
   const EGG_MIN = 2, EGG_MAX = 3;       // 蓝星数量（每轮必有）
+  const EGG_SPEED = 1.1;                // 蓝星角速度系数（>1 更快，更快扫回屏幕中部）
   // 蓝星轨道半径带：绕左上角转，但取“过屏幕中部”的那一圈（屏心距左上角 = 0.5×对角线）
   const EGG_R_MIN = 0.40, EGG_R_MAX = 0.62;
   const INTRO_MS = 5000;       // 开屏星轨最短时长，蓝星出现后定格
@@ -409,7 +410,7 @@ html, body {
         ? maxR * (EGG_R_MIN + Math.random() * (EGG_R_MAX - EGG_R_MIN))
         : 60 + Math.random() * maxR,
       angle: Math.random() * Math.PI * 2,
-      speed: (ANGULAR_SPEED * (0.92 + Math.random() * 0.16)) * (isEaster ? 0.55 : 1),
+      speed: (ANGULAR_SPEED * (0.92 + Math.random() * 0.16)) * (isEaster ? EGG_SPEED : 1),
       size: isEaster ? 2 + Math.random() * 1 : 0.5 + Math.random() * 0.8,
       color: isEaster ? EASTER_EGG_COLOR : '#ffffff',
       isEasterEgg: isEaster,
