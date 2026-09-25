@@ -284,6 +284,7 @@ html, body {
 
 #page-back {
   position: absolute;
+  z-index: 2;
   top: 18px;
   left: 18px;
   width: 40px;
@@ -844,7 +845,7 @@ YAML 三个段：common（max_side）、poster（日漫/美漫/平铺那套）�
 
   pageBack.addEventListener('click', () => {
     if (location.hash) location.hash = '';
-    else hidePage();
+    hidePage();          // 不等 hashchange，立刻收
   });
   window.addEventListener('hashchange', route);
   route();
