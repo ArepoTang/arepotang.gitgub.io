@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>纯CSS丝滑子母菜单（右侧三选项）</title>
+  <style>
+    * { 
+      box-sizing: border-box; 
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    .switcher {
+      position: relative;
+      display: flex;
+      width: 380px; /* 稍微加宽，容纳3个右侧子选项 */
+      height: 52px;
+      background: #f1f3f5;
+      border-radius: 999px;
+      padding: 4px;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.04);
+    }
+
+    /* 黑色滑块：默认隐藏 */
+    .slider {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      height: calc(100% - 8px);
+      background: #111;
+      border-radius: 999px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      opacity: 0;
+      width: 0;
+      /* 核心：同时过渡 left 和 width，实现宽窄丝滑变化 */
+      transition: 
+        left 0.45s cubic-bezier(0.25, 1, 0.5, 1),
+        width 0.45s cubic-bezier(0.25, 1, 0.5, 1),
+        opacity 0.3s ease;
+      z-index: 1;
+    }
+
+    .left-group, .right-group {
+      flex: 1;
+      position: relative;
+      z-index: 2;
+    }
+
+    .main-label, .sub-tab {
+      position: absolute;
+      top: 0;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      color: #868e96;
+      transition: color 0.3s, opacity 0.3s;
+      user-select: none;
+    }
+
+    .main-label { width: 100%; left: 0; }
+    
+    /* 左侧子项：各占 50% */
+    .sub-tab.left-sub-basic, .sub-tab.left-sub-pro { width: 50%; font-size: 13px; }
+    .left-sub-basic { left: 0; }
+    .left-sub-pro { left: 50%; }
+
+    /* 右侧子项：各占 33.33% */
+    .sub-tab.right-sub-monthly, .sub-tab.right-sub-quarterly, .sub-tab.right-sub-annual { width: 33.333%; font-size: 12px; }
+    .right-sub-monthly { left: 0; }
+    .right-sub-quarterly { left: 33.333%; }
+    .right-sub-annual { left: 66.666%; }
+
+    input[type="radio"] { display: none; }
+
+    /* ================= 纯 CSS 逻辑控制 ================= */
+
+    /* 1. 滑块状态逻辑（通过 left 和 width 精确定位） */
+    /* 左侧子项选中：宽度 25%（占据左半边的一半） */
+    #free-basic:checked ~ .slider,
+    #free-pro:checked ~ .slider {
+      opacity: 1;
+      width: calc(25% - 2px);
+    }
+    #free-basic:checked ~ .slider { left: 4px; }
+    #free-pro:checked ~ .slider { left: calc(25% + 2px); }
+
+    /* 右侧子项选中：宽度 16.67%（占据右半边三分之一） */
+    #premium-monthly:checked ~ .slider,
+    #premium-quarterly:checked ~ .slider,
+    #premium-annual:checked ~ .slider {
+      opacity: 1;
+      width: calc(16.666% - 2px);
+    }
+    #premium-monthly:checked ~ .slider { left: calc(50% + 1px); }
+    #premium-quarterly:checked ~ .slider { left: calc(66.666% + 1px); }
+    #premium-annual:checked ~ .slider { left: calc(83.333% + 1px); }
+
+    /* 2. 内容显示与隐藏 */
+    .left-sub-basic, .left-sub-pro,
+    .right-sub-monthly, .right-sub-quarterly, .right-sub-annual { opacity: 0; pointer-events: none; }
+
+    /* 左侧展开状态 */
+    #free-basic:checked ~ .left-group .left-main,
+    #free-pro:checked ~ .left-group .left-main { opacity: 0; pointer-events: none; }
+    #free-basic:checked ~ .left-group .left-sub-basic,
+    #free-basic:checked ~ .left-group .left-sub-pro,
+    #free-pro:checked ~ .left-group .left-sub-basic,
+    #free-pro:checked ~ .left-group .left-sub-pro { opacity: 1; pointer-events: auto; }
+    
+    #free-basic:checked ~ .right-group .right-main,
+    #free-pro:checked ~ .right-group .right-main { opacity: 1; pointer-events: auto; }
+
+    /* 右侧展开状态 */
+    #premium-monthly:checked ~ .right-group .right-main,
+    #premium-quarterly:checked ~ .right-group .right-main,
+    #premium-annual:checked ~ .right-group .right-main { opacity: 0; pointer-events: none; }
+    #premium-monthly:checked ~ .right-group .right-sub-monthly,
+    #premium-monthly:checked ~ .right-group .right-sub-quarterly,
+    #premium-monthly:checked ~ .right-group .right-sub-annual,
+    #premium-quarterly:checked ~ .right-group .right-sub-monthly,
+    #premium-quarterly:checked ~ .right-group .right-sub-quarterly,
+    #premium-quarterly:checked ~ .right-group .right-sub-annual,
+    #premium-annual:checked ~ .right-group .right-sub-monthly,
+    #premium-annual:checked ~ .right-group .right-sub-quarterly,
+    #premium-annual:checked ~ .right-group .right-sub-annual { opacity: 1; pointer-events: auto; }
+
+    #premium-monthly:checked ~ .left-group .left-main,
+    #premium-quarterly:checked ~ .left-group .left-main,
+    #premium-annual:checked ~ .left-group .left-main { opacity: 1; pointer-events: auto; }
+
+    /* 3. 文字高亮 */
+    #free-basic:checked ~ .left-group .left-sub-basic,
+    #free-pro:checked ~ .left-group .left-sub-pro { color: #fff; }
+
+    #premium-monthly:checked ~ .right-group .right-sub-monthly,
+    #premium-quarterly:checked ~ .right-group .right-sub-quarterly,
+    #premium-annual:checked ~ .right-group .right-sub-annual { color: #fff; }
+  </style>
+</head>
+<body>
+
+  <div class="switcher">
+    <!-- 输入源：无默认选中 -->
+    <input type="radio" name="plan" id="free-basic" />
+    <input type="radio" name="plan" id="free-pro" />
+    <input type="radio" name="plan" id="premium-monthly" />
+    <input type="radio" name="plan" id="premium-quarterly" />
+    <input type="radio" name="plan" id="premium-annual" />
+
+    <div class="slider"></div>
+
+    <div class="left-group">
+      <label for="free-basic" class="main-label left-main">Free</label>
+      <label for="free-basic" class="sub-tab left-sub-basic">Basic</label>
+      <label for="free-pro" class="sub-tab left-sub-pro">Pro</label>
+    </div>
+
+    <div class="right-group">
+      <label for="premium-monthly" class="main-label right-main">Premium</label>
+      <label for="premium-monthly" class="sub-tab right-sub-monthly">Monthly</label>
+      <label for="premium-quarterly" class="sub-tab right-sub-quarterly">Quarterly</label>
+      <label for="premium-annual" class="sub-tab right-sub-annual">Annual</label>
+    </div>
+  </div>
+
+</body>
+</html>
