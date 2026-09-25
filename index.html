@@ -312,11 +312,9 @@ html, body {
 .page-inner {
   position: absolute;
   inset: 0;
-  max-width: 620px;
-  margin: 0 auto;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 92px 28px calc(48px + env(safe-area-inset-bottom, 0px));
+  padding: 88px 20px calc(44px + env(safe-area-inset-bottom, 0px));
   opacity: 0;
   transform: translateY(10px);
   transition: opacity 0.35s ease, transform 0.35s ease;
@@ -324,6 +322,112 @@ html, body {
 #page.show .page-inner {
   opacity: 1;
   transform: none;
+}
+.page-card {
+  position: relative;
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 30px 26px;
+  animation: cardIn 0.45s cubic-bezier(.2,.8,.25,1);
+}
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(8px); }
+}
+
+/* --- 纸板箱（phi）--- */
+#page[data-theme="cardboard"] .page-card {
+  border-radius: 4px;
+  border: 1px solid rgba(84,58,32,0.35);
+  background-image:
+    repeating-linear-gradient(90deg, rgba(120,86,52,0.09) 0 1px, transparent 1px 7px),
+    linear-gradient(160deg, #cfb086, #b8935f);
+  box-shadow: 0 18px 40px rgba(0,0,0,0.5), inset 0 0 60px rgba(97,67,36,0.25);
+  color: #4a3520;
+}
+#page[data-theme="cardboard"] .page-card::before {
+  content: '';
+  position: absolute;
+  top: -13px;
+  left: 50%;
+  width: 96px;
+  height: 26px;
+  transform: translateX(-50%) rotate(-2deg);
+  background: rgba(240,233,215,0.35);
+  border-left: 1px dashed rgba(255,255,255,0.4);
+  border-right: 1px dashed rgba(255,255,255,0.4);
+}
+#page[data-theme="cardboard"] #page-title { color: #38270f; }
+#page[data-theme="cardboard"] #page-desc { color: rgba(56,39,15,0.6); }
+#page[data-theme="cardboard"] #page-body p { color: rgba(56,39,15,0.85); }
+#page[data-theme="cardboard"] #page-link {
+  border-color: rgba(56,39,15,0.4);
+  background: rgba(255,255,255,0.28);
+  color: #38270f;
+}
+
+/* --- 报纸（epsilon）--- */
+#page[data-theme="newspaper"] .page-card {
+  border-radius: 2px;
+  background: linear-gradient(#f7f2e7, #ebe4d4);
+  box-shadow: 0 18px 40px rgba(0,0,0,0.5);
+  font-family: Georgia, 'Songti SC', 'Noto Serif SC', serif;
+  color: #1c1a16;
+}
+#page[data-theme="newspaper"] .page-card::before {
+  content: '';
+  display: block;
+  height: 6px;
+  margin-bottom: 16px;
+  border-top: 1px solid rgba(28,26,22,0.75);
+  border-bottom: 1px solid rgba(28,26,22,0.75);
+}
+#page[data-theme="newspaper"] #page-title {
+  padding-bottom: 12px;
+  border-bottom: 3px double rgba(28,26,22,0.6);
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #15130f;
+}
+#page[data-theme="newspaper"] #page-desc { color: rgba(28,26,22,0.6); }
+#page[data-theme="newspaper"] #page-body p { color: #2a261f; }
+#page[data-theme="newspaper"] #page-link {
+  border-color: rgba(28,26,22,0.35);
+  background: rgba(28,26,22,0.05);
+  color: #15130f;
+}
+
+/* --- 半调网罦（lambda）--- */
+#page[data-theme="halftone"] .page-card {
+  border-radius: 16px;
+  border: 1px solid rgba(79,195,247,0.3);
+  overflow: hidden;
+  background-color: #06080c;
+  background-image:
+    linear-gradient(rgba(6,8,12,0.72), rgba(6,8,12,0.72)),
+    radial-gradient(circle, rgba(79,195,247,0.5) 1px, transparent 1.2px);
+  background-size: auto, 5px 5px;
+  box-shadow: 0 18px 50px rgba(0,0,0,0.6), inset 0 0 80px rgba(79,195,247,0.06);
+  color: #cfe9ff;
+}
+#page[data-theme="halftone"] .page-card::before {
+  content: '';
+  display: block;
+  height: 52px;
+  margin: -30px -26px 18px;
+  border-bottom: 1px solid rgba(79,195,247,0.25);
+  background-image: radial-gradient(circle, rgba(79,195,247,0.6) 1.5px, transparent 2px);
+  background-size: 8px 8px;
+}
+#page[data-theme="halftone"] #page-title {
+  color: #eaf7ff;
+  text-shadow: 0 0 18px rgba(79,195,247,0.45);
+}
+#page[data-theme="halftone"] #page-desc { color: rgba(207,233,255,0.5); }
+#page[data-theme="halftone"] #page-body p { color: rgba(207,233,255,0.75); }
+#page[data-theme="halftone"] #page-link {
+  border-color: rgba(79,195,247,0.5);
+  background: rgba(79,195,247,0.12);
+  color: #dff0ff;
 }
 #page-title {
   font-size: 30px;
@@ -401,10 +505,12 @@ html, body {
   <div class="frost"></div>
   <button id="page-back" aria-label="返回">←</button>
   <div class="page-inner">
-    <h1 id="page-title"></h1>
-    <div id="page-desc" hidden></div>
-    <div id="page-body"></div>
-    <a id="page-link" hidden target="_blank" rel="noopener"></a>
+    <article class="page-card">
+      <h1 id="page-title"></h1>
+      <div id="page-desc" hidden></div>
+      <div id="page-body"></div>
+      <a id="page-link" hidden target="_blank" rel="noopener"></a>
+    </article>
   </div>
 </div>
 
@@ -423,11 +529,11 @@ html, body {
   const modalTitle = document.getElementById('modal-title');
   const modalList = document.getElementById('modal-list');
 
-  // 汉堡菜单的内容：项目导航（详情页内容全在 body 里，空的就先不渲染）
+  // 汉堡菜单的内容：项目导航（theme 决定详情页风格，body 是详情段落，现为空）
   const PROJECTS = [
-    { id: 'phi',     text: 'phi',     desc: '半调海报 App',    href: 'https://gitee.com/a231216/phi', body: [] },
-    { id: 'lambda',  text: 'lambda',  desc: 'halftone 命令行', href: '', body: [] },
-    { id: 'epsilon', text: 'epsilon', desc: 'poster 命令行',   href: '', body: [] },
+    { id: 'phi',     text: 'phi',     desc: '半调海报 App',    href: 'https://gitee.com/a231216/phi', theme: 'cardboard', body: [] },
+    { id: 'lambda',  text: 'lambda',  desc: 'halftone 命令行', href: '', theme: 'halftone', body: [] },
+    { id: 'epsilon', text: 'epsilon', desc: 'poster 命令行',   href: '', theme: 'newspaper', body: [] },
   ];
 
   // 蓝星彩蛋的池子（每次只抽一条）
@@ -549,6 +655,7 @@ html, body {
   const pageBack = document.getElementById('page-back');
 
   function showPage(p) {
+    page.dataset.theme = p.theme || '';
     pageTitle.textContent = p.text;
     pageDesc.textContent = p.desc || '';
     pageDesc.hidden = !p.desc;
