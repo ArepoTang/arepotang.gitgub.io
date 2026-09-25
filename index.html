@@ -499,6 +499,23 @@ html, body {
 }
 #page-body a { color: inherit; text-decoration: underline; }
 #page-body strong { font-weight: 600; }
+/* 正文里可以随手塞按钮 */
+#page-body button, #page-body .btn {
+  display: inline-block;
+  margin-top: 16px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.4;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.25s, opacity 0.25s;
+}
+#page-body button:hover, #page-body .btn:hover { background: rgba(127,127,127,0.16); }
 #page-body table {
   width: 100%;
   margin-top: 16px;
@@ -593,128 +610,45 @@ html, body {
   const modalTitle = document.getElementById('modal-title');
   const modalList = document.getElementById('modal-list');
 
-  // Phi.md 原文（改内容直接改这段）
-  const PHI_MD = `
-### Phi是什么?
-针对Epslion和Lambda构建的移动端移植项目，项目地址：https://gitee.com/a231216/phi
-### Phi 调参指南
-#### 一、操作流程
-1. 选择文件 —— Android 上走系统文件选择器
-2. 选方案 —— 上面那排 5 档切换器，左二右三
-3. 简单 / 复杂 —— 简单只露常用滑块；复杂把高级参数全摊开（顺便多出 YAML 存档）
-4. 生 成 —— 下面出图，图下一行字是这次处理的说明（耗时 / 尺寸）
-5. 保存图片 —— Android 弹系统「另存为」，自己挑目录
-#### 二、五个方案怎么选
-日漫是纯黑白（墨线 + 网点），所以它没有色板 / 色数；长边上限只有报纸那三档有。
-#### 三、长边上限（报纸三档通用）
-max_side，复杂模式下能改，默认 2560，范围 640–4096。
-处理前先把图缩到长边不超过它、算完再放大回原尺寸（出图尺寸不变，只是算法作用在小图上）。
-手机上 2560 够用；要更细就 4096（慢 2–4 倍），只求快就 640–1600。它也会改变观感：同一个网点点距，在缩得更狠的图上点显得更大。
-#### 四、日漫 / 美漫：墨线 + 网点
-这一套参数两个方案共用。
-经验值：人像 T 30–40；细节多的风景 T 40–50；想要草稿感 T 20–25。
-「墨线覆盖率异常」这个报错就是 T 或 R 没调好（见第十节）。
-美漫额外的三个：
-#### 五、平铺：色块 + 描边
-#### 六、半调网点（黑白 / RGB 共用）
-点距的一个细节：grid < 10 时程序会先按比例放大图片再画点（否则圆画不圆），出图仍是原尺寸，只是更慢。
-#### 七、色板（平铺 / 美漫，复杂模式下还能自定义）
-- auto 自适应：按图量化，色数由「色数」决定
-- morandi / pop / cool / earth / benday：五份固定色板（benday 是美漫本戴色）
-- 自定义色板（复杂）：每行一个 #rrggbb。填了就不量化 —— 每个像素直接归到最近的颜色
-- 从图抽色：用当前「色数」抽一份色板填进上面的框，可以再手改
-「色数」滑块的显隐跟着色板走：只有选 auto 时才露出来（其它几套色板颜色是固定写死的，色数不起作用）。
-#### 八、存档：YAML
-复杂模式最下面的「导出 YAML / 导入 YAML」：
-- 导出 = 把当前全部参数（包括没露出来的）存成 poster.yaml，Android 上走系统下载
-- 导入 = 把一份 YAML 灌回界面；不认识的键会告诉你哪些被忽略
-- 换方案、换图都不用重调一遍，也方便把一套调好的参数贴给别人
-YAML 三个段：common（max_side）、poster（日漫/美漫/平铺那套）、halftone（网点那套），顶层还有 mode 和 palette。
-#### 九、常见诉求 → 动哪个
+  // Phi 详情正文：HTML 片段，直接写标签（<button>/<a class="btn"> 等）
+  const PHI_HTML = `<h3>Phi是什么?</h3>
+<p>针对Epslion和Lambda构建的移动端移植项目，项目地址：https://gitee.com/a231216/phi</p>
+<h3>Phi 调参指南</h3>
+<h4>一、操作流程</h4>
+<ol><li>选择文件 —— Android 上走系统文件选择器</li><li>选方案 —— 上面那排 5 档切换器，左二右三</li><li>简单 / 复杂 —— 简单只露常用滑块；复杂把高级参数全摊开（顺便多出 YAML 存档）</li><li>生 成 —— 下面出图，图下一行字是这次处理的说明（耗时 / 尺寸）</li><li>保存图片 —— Android 弹系统「另存为」，自己挑目录</li></ol>
+<h4>二、五个方案怎么选</h4>
+<p>日漫是纯黑白（墨线 + 网点），所以它没有色板 / 色数；长边上限只有报纸那三档有。</p>
+<h4>三、长边上限（报纸三档通用）</h4>
+<p>max_side，复杂模式下能改，默认 2560，范围 640–4096。</p>
+<p>处理前先把图缩到长边不超过它、算完再放大回原尺寸（出图尺寸不变，只是算法作用在小图上）。</p>
+<p>手机上 2560 够用；要更细就 4096（慢 2–4 倍），只求快就 640–1600。它也会改变观感：同一个网点点距，在缩得更狠的图上点显得更大。</p>
+<h4>四、日漫 / 美漫：墨线 + 网点</h4>
+<p>这一套参数两个方案共用。</p>
+<p>经验值：人像 T 30–40；细节多的风景 T 40–50；想要草稿感 T 20–25。</p>
+<p>「墨线覆盖率异常」这个报错就是 T 或 R 没调好（见第十节）。</p>
+<p>美漫额外的三个：</p>
+<h4>五、平铺：色块 + 描边</h4>
+<h4>六、半调网点（黑白 / RGB 共用）</h4>
+<p>点距的一个细节：grid &lt; 10 时程序会先按比例放大图片再画点（否则圆画不圆），出图仍是原尺寸，只是更慢。</p>
+<h4>七、色板（平铺 / 美漫，复杂模式下还能自定义）</h4>
+<ul><li>auto 自适应：按图量化，色数由「色数」决定</li><li>morandi / pop / cool / earth / benday：五份固定色板（benday 是美漫本戴色）</li><li>自定义色板（复杂）：每行一个 #rrggbb。填了就不量化 —— 每个像素直接归到最近的颜色</li><li>从图抽色：用当前「色数」抽一份色板填进上面的框，可以再手改</li></ul>
+<p>「色数」滑块的显隐跟着色板走：只有选 auto 时才露出来（其它几套色板颜色是固定写死的，色数不起作用）。</p>
+<h4>八、存档：YAML</h4>
+<p>复杂模式最下面的「导出 YAML / 导入 YAML」：</p>
+<ul><li>导出 = 把当前全部参数（包括没露出来的）存成 poster.yaml，Android 上走系统下载</li><li>导入 = 把一份 YAML 灌回界面；不认识的键会告诉你哪些被忽略</li><li>换方案、换图都不用重调一遍，也方便把一套调好的参数贴给别人</li></ul>
+<p>YAML 三个段：common（max_side）、poster（日漫/美漫/平铺那套）、halftone（网点那套），顶层还有 mode 和 palette。</p>
+<h4>九、常见诉求 → 动哪个</h4>
+<table><thead><tr><th>想要</th><th>怎么调</th></tr></thead><tbody><tr><td>更像老报纸</td><td>美漫：纸色 <code>#f2ead8</code> + 色板 benday + 暗点变暗 0.5；或半调黑白：点距 14–18 + <code>#ffeedd</code> 底</td></tr><tr><td>线条更干净</td><td>日漫：T 40–50、R 2；再把「网点留白」调小（80–85）少铺网点</td></tr><tr><td>网纹太规律 / 有摩尔纹</td><td>半调：抖动 0.25–0.4、角度换 15 或 75；别关预模糊</td></tr><tr><td>深色区有白缝</td><td>半调：勾「点覆盖格角」；美漫/平铺：色数调大一点</td></tr><tr><td>出图太灰、层次不清</td><td>调小「网点留白」（网点少一点）、明暗档数降到 3</td></tr><tr><td>出图太糊</td><td>长边上限调到 4096；半调把点距调小（&lt;10 会自动放大）</td></tr><tr><td>处理太慢</td><td>长边上限降到 1600 / 点距 ≥ 12 / 线粗 R 别用 4</td></tr></tbody></table>
+<h4>十、报错都是什么</h4>
+<p>生成图存在应用私有目录（/data/data/com.phi.io/files/app/.work/…），文件管理器里看不见，</p>
+<p>所以要留图只能走「保存图片」；每次启动 App 会自动清掉上一轮留下的结果图。</p>`;
 
-
-| 想要 | 怎么调 |
-|---|---|
-| 更像老报纸 | 美漫：纸色 \`#f2ead8\` + 色板 benday + 暗点变暗 0.5；或半调黑白：点距 14–18 + \`#ffeedd\` 底 |
-| 线条更干净 | 日漫：T 40–50、R 2；再把「网点留白」调小（80–85）少铺网点 |
-| 网纹太规律 / 有摩尔纹 | 半调：抖动 0.25–0.4、角度换 15 或 75；别关预模糊 |
-| 深色区有白缝 | 半调：勾「点覆盖格角」；美漫/平铺：色数调大一点 |
-| 出图太灰、层次不清 | 调小「网点留白」（网点少一点）、明暗档数降到 3 |
-| 出图太糊 | 长边上限调到 4096；半调把点距调小（<10 会自动放大） |
-| 处理太慢 | 长边上限降到 1600 / 点距 ≥ 12 / 线粗 R 别用 4 |
-
-#### 十、报错都是什么
-生成图存在应用私有目录（/data/data/com.phi.io/files/app/.work/…），文件管理器里看不见，
-所以要留图只能走「保存图片」；每次启动 App 会自动清掉上一轮留下的结果图。
-`;
-
-  // 汉堡菜单的内容；body 是 Markdown 源码（支持 #标题 / **粗** / *斜* / `代码` / [链接](url) / - 列表 / 1. 列表 / > 引用 / ---）
+  // 汉堡菜单的内容；body 是详情页正文的 HTML 片段（直接写标签，如 <button class="btn">）
   const PROJECTS = [
-    { id: 'phi',     text: 'phi',     desc: '半调海报 App',    href: 'https://gitee.com/a231216/phi', theme: 'cardboard', body: PHI_MD },
+    { id: 'phi',     text: 'phi',     desc: '半调海报 App',    href: 'https://gitee.com/a231216/phi', theme: 'cardboard', body: PHI_HTML },
     { id: 'lambda',  text: 'lambda',  desc: 'halftone 命令行', href: '', theme: 'halftone', body: '' },
     { id: 'epsilon', text: 'epsilon', desc: 'poster 命令行',   href: '', theme: 'newspaper', body: '' },
   ];
-
-  // 迷你 Markdown → HTML（先转义再替换，不引外部库）
-  function md(src) {
-    const esc = (s) => s.replace(/[&<>"']/g, (c) =>
-      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-    const inline = (s) => esc(s)
-      .replace(/`([^`]+)`/g, '<code>$1</code>')
-      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-      .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
-
-    const out = [];
-    let list = '';
-    let rows = [];   // 表格行缓冲
-    const closeList = () => { if (list) { out.push('</' + list + '>'); list = ''; } };
-    const flushTable = () => {
-      if (!rows.length) return;
-      const cells = (r) => r.replace(/^\||\|$/g, '').split('|').map((c) => c.trim());
-      out.push('<table><thead><tr>' + cells(rows[0]).map((c) => '<th>' + inline(c) + '</th>').join('') + '</tr></thead><tbody>');
-      for (let i = 1; i < rows.length; i++) {
-        out.push('<tr>' + cells(rows[i]).map((c) => '<td>' + inline(c) + '</td>').join('') + '</tr>');
-      }
-      out.push('</tbody></table>');
-      rows = [];
-    };
-
-    for (const raw of src.split('\n')) {
-      const line = raw.trim();
-
-      // 表格：| a | b | + 分隔行
-      if (/^\|.*\|$/.test(line)) {
-        closeList();
-        if (!/^\|[\s:\-|]+\|$/.test(line)) rows.push(line);
-        continue;
-      }
-      flushTable();
-
-      const m = line.match(/^(#{1,4})\s+(.*)$/);
-      const ul = line.match(/^[-*+]\s+(.*)$/);
-      const ol = line.match(/^\d+\.\s+(.*)$/);
-      const bq = line.match(/^>\s?(.*)$/);
-
-      if (!line) { closeList(); }
-      else if (m) { closeList(); out.push('<' + 'h' + m[1].length + '>' + inline(m[2]) + '</h' + m[1].length + '>'); }
-      else if (/^(-{3,}|\*{3,})$/.test(line)) { closeList(); out.push('<hr>'); }
-      else if (bq) { closeList(); out.push('<blockquote>' + inline(bq[1]) + '</blockquote>'); }
-      else if (ul) {
-        if (list !== 'ul') { closeList(); out.push('<ul>'); list = 'ul'; }
-        out.push('<li>' + inline(ul[1]) + '</li>');
-      } else if (ol) {
-        if (list !== 'ol') { closeList(); out.push('<ol>'); list = 'ol'; }
-        out.push('<li>' + inline(ol[1]) + '</li>');
-      } else {
-        closeList();
-        out.push('<p>' + inline(line) + '</p>');
-      }
-    }
-    closeList();
-    flushTable();
-    return out.join('');
-  }
 
   // 蓝星彩蛋的池子（每次只抽一条）
   const EGG_LINES = [
@@ -840,7 +774,7 @@ YAML 三个段：common（max_side）、poster（日漫/美漫/平铺那套）�
     pageDesc.textContent = p.desc || '';
     pageDesc.hidden = !p.desc;
 
-    pageBody.innerHTML = p.body ? md(p.body) : '';
+    pageBody.innerHTML = p.body || '';
 
     pageLink.hidden = !p.href;
     if (p.href) {
