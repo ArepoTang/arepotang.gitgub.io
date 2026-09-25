@@ -628,15 +628,10 @@ html, body {
     return false;
   }
 
+  // 只用 click：touchstart + 同一次触摸补发的 click 会开完又被磨砂背景关掉
   canvas.addEventListener('click', (e) => {
     if (hitTest(e.clientX, e.clientY)) openEgg();
   });
-
-  canvas.addEventListener('touchstart', (e) => {
-    if (e.touches.length > 0 && hitTest(e.touches[0].clientX, e.touches[0].clientY)) {
-      openEgg();
-    }
-  }, { passive: true });
 
   // 点磨砂背景 / Esc 关闭
   modal.addEventListener('click', (e) => {
