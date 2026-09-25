@@ -335,21 +335,34 @@ html, body {
     '定位Jebediah Kerman...',
   ];
 
-  // 每次只显示一条（随机抽签）
-  function openMenu(pick) {
-    const idx = typeof pick === 'number' ? pick : nextPick();
-    menuList.innerHTML = '';
+  function makeItem(text) {
     const li = document.createElement('li');
     const a = document.createElement('a');
     a.className = 'item';
     a.href = '#';
     a.addEventListener('click', (e) => e.preventDefault());
-    a.textContent = MENU[idx];
+    a.textContent = text;
     li.appendChild(a);
-    menuList.appendChild(li);
+    return li;
+  }
 
+  function showModal() {
     modal.classList.remove('hide');
     requestAnimationFrame(() => modal.classList.add('show'));
+  }
+
+  // 汉堡菜单：整份项目导航
+  function openMenu() {
+    menuList.innerHTML = '';
+    for (const text of MENU) menuList.appendChild(makeItem(text));
+    showModal();
+  }
+
+  // 蓝星彩蛋：只显示抽中的那一条
+  function openEgg() {
+    menuList.innerHTML = '';
+    menuList.appendChild(makeItem(MENU[nextPick()]));
+    showModal();
   }
 
   // 抽签袋：一轮里每个条目各抽到一次才重洗 → 前 N 次点击不重样
@@ -403,8 +416,8 @@ html, body {
   const EGG_MIN = 5, EGG_MAX = 8;       // 蓝星数量（每轮必有）
   // 蓝星轨道半径带：绕左上角转，但取“过屏幕中部”的那一圈（屏心距左上角 = 0.5×对角线）
   const EGG_R_MIN = 0.40, EGG_R_MAX = 0.62;
-  const INTRO_MS = 5000;       // 开屏星轨最短时长，蓝星出现后定格
-  const GUIDE_AUTO_MS = 2500;  // 黑磨砂定格时长，到点自动恢复
+  const INTRO_MS = 2500;       // 开屏星轨最短时长，蓝星出现后定格
+  const GUIDE_AUTO_MS = 5000;  // 黑磨砂定格时长，到点自动恢复
 
   // 随机挑 2~3 颗当蓝星，强制包含第 0 颗 → 不会整轮没蓝星
   const eggIdx = new Set([0]);
@@ -616,12 +629,12 @@ html, body {
   }
 
   canvas.addEventListener('click', (e) => {
-    if (hitTest(e.clientX, e.clientY)) openMenu();
+    if (hitTest(e.clientX, e.clientY)) openEgg();
   });
 
   canvas.addEventListener('touchstart', (e) => {
     if (e.touches.length > 0 && hitTest(e.touches[0].clientX, e.touches[0].clientY)) {
-      openMenu();
+      openEgg();
     }
   }, { passive: true });
 
@@ -635,7 +648,7 @@ html, body {
   });
   modalClose.addEventListener('click', closeMenu);
 
-  // 汉堡包按钮 → 项目导航弹窗（原来的随机跳转去掉）
+  // 汉堡包按钮 → 项目导航弹窗（蓝星才是彩蛋）
   floatBtn.addEventListener('click', () => openMenu());
 })();
 </script>
