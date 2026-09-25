@@ -358,7 +358,7 @@ html, body {
 }
 #page[data-theme="cardboard"] #page-title { color: #38270f; }
 #page[data-theme="cardboard"] #page-desc { color: rgba(56,39,15,0.6); }
-#page[data-theme="cardboard"] #page-body p { color: rgba(56,39,15,0.85); }
+#page[data-theme="cardboard"] #page-body { color: rgba(56,39,15,0.85); }
 #page[data-theme="cardboard"] #page-link {
   border-color: rgba(56,39,15,0.4);
   background: rgba(255,255,255,0.28);
@@ -389,7 +389,7 @@ html, body {
   color: #15130f;
 }
 #page[data-theme="newspaper"] #page-desc { color: rgba(28,26,22,0.6); }
-#page[data-theme="newspaper"] #page-body p { color: #2a261f; }
+#page[data-theme="newspaper"] #page-body { color: #2a261f; }
 #page[data-theme="newspaper"] #page-link {
   border-color: rgba(28,26,22,0.35);
   background: rgba(28,26,22,0.05);
@@ -423,7 +423,7 @@ html, body {
   text-shadow: 0 0 18px rgba(79,195,247,0.45);
 }
 #page[data-theme="halftone"] #page-desc { color: rgba(207,233,255,0.5); }
-#page[data-theme="halftone"] #page-body p { color: rgba(207,233,255,0.75); }
+#page[data-theme="halftone"] #page-body { color: rgba(207,233,255,0.75); }
 #page[data-theme="halftone"] #page-link {
   border-color: rgba(79,195,247,0.5);
   background: rgba(79,195,247,0.12);
@@ -443,13 +443,38 @@ html, body {
   color: rgba(255,255,255,0.45);
 }
 #page-desc[hidden] { display: none; }
+#page-body { color: rgba(255,255,255,0.68); }
 #page-body p {
   margin-top: 20px;
   font-size: 14px;
   font-weight: 300;
   line-height: 1.9;
-  color: rgba(255,255,255,0.68);
 }
+#page-body h2 { margin: 28px 0 10px; font-size: 17px; font-weight: 600; letter-spacing: 1px; }
+#page-body h3 { margin: 22px 0 8px; font-size: 15px; font-weight: 600; }
+#page-body ul, #page-body ol { margin: 16px 0 0 22px; }
+#page-body li { margin-top: 6px; font-size: 14px; font-weight: 300; line-height: 1.8; }
+#page-body blockquote {
+  margin-top: 18px;
+  padding-left: 14px;
+  border-left: 2px solid currentColor;
+  opacity: 0.75;
+}
+#page-body code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(127,127,127,0.2);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.92em;
+}
+#page-body hr {
+  margin: 26px 0;
+  border: 0;
+  border-top: 1px solid currentColor;
+  opacity: 0.25;
+}
+#page-body a { color: inherit; text-decoration: underline; }
+#page-body strong { font-weight: 600; }
 #page-link {
   display: inline-block;
   margin-top: 28px;
@@ -529,12 +554,52 @@ html, body {
   const modalTitle = document.getElementById('modal-title');
   const modalList = document.getElementById('modal-list');
 
-  // 汉堡菜单的内容：项目导航（theme 决定详情页风格，body 是详情段落，现为空）
+  // 汉堡菜单的内容；body 是 Markdown 源码（支持 #标题 / **粗** / *斜* / `代码` / [链接](url) / - 列表 / 1. 列表 / > 引用 / ---）
   const PROJECTS = [
-    { id: 'phi',     text: 'phi',     desc: '半调海报 App',    href: 'https://gitee.com/a231216/phi', theme: 'cardboard', body: [] },
-    { id: 'lambda',  text: 'lambda',  desc: 'halftone 命令行', href: '', theme: 'halftone', body: [] },
-    { id: 'epsilon', text: 'epsilon', desc: 'poster 命令行',   href: '', theme: 'newspaper', body: [] },
+    { id: 'phi',     text: 'phi',     desc: '半调海报 App',    href: 'https://gitee.com/a231216/phi', theme: 'cardboard', body: '' },
+    { id: 'lambda',  text: 'lambda',  desc: 'halftone 命令行', href: '', theme: 'halftone', body: '' },
+    { id: 'epsilon', text: 'epsilon', desc: 'poster 命令行',   href: '', theme: 'newspaper', body: '' },
   ];
+
+  // 迷你 Markdown → HTML（先转义再替换，不引外部库）
+  function md(src) {
+    const esc = (s) => s.replace(/[&<>"']/g, (c) =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const inline = (s) => esc(s)
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+      .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+
+    const out = [];
+    let list = '';
+    const closeList = () => { if (list) { out.push('</' + list + '>'); list = ''; } };
+
+    for (const raw of src.split('\n')) {
+      const line = raw.trim();
+      const m = line.match(/^(#{1,4})\s+(.*)$/);
+      const ul = line.match(/^[-*+]\s+(.*)$/);
+      const ol = line.match(/^\d+\.\s+(.*)$/);
+      const bq = line.match(/^>\s?(.*)$/);
+
+      if (!line) { closeList(); }
+      else if (m) { closeList(); out.push('<' + 'h' + m[1].length + '>' + inline(m[2]) + '</h' + m[1].length + '>'); }
+      else if (/^(-{3,}|\*{3,})$/.test(line)) { closeList(); out.push('<hr>'); }
+      else if (bq) { closeList(); out.push('<blockquote>' + inline(bq[1]) + '</blockquote>'); }
+      else if (ul) {
+        if (list !== 'ul') { closeList(); out.push('<ul>'); list = 'ul'; }
+        out.push('<li>' + inline(ul[1]) + '</li>');
+      } else if (ol) {
+        if (list !== 'ol') { closeList(); out.push('<ol>'); list = 'ol'; }
+        out.push('<li>' + inline(ol[1]) + '</li>');
+      } else {
+        closeList();
+        out.push('<p>' + inline(line) + '</p>');
+      }
+    }
+    closeList();
+    return out.join('');
+  }
 
   // 蓝星彩蛋的池子（每次只抽一条）
   const EGG_LINES = [
@@ -660,12 +725,7 @@ html, body {
     pageDesc.textContent = p.desc || '';
     pageDesc.hidden = !p.desc;
 
-    pageBody.innerHTML = '';
-    for (const para of p.body || []) {
-      const el = document.createElement('p');
-      el.textContent = para;
-      pageBody.appendChild(el);
-    }
+    pageBody.innerHTML = p.body ? md(p.body) : '';
 
     pageLink.hidden = !p.href;
     if (p.href) {
