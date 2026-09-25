@@ -453,9 +453,9 @@ html, body {
   const EGG_MIN = 5, EGG_MAX = 8;       // 蓝星数量（每轮必有）
   // 蓝星轨道半径带：绕左上角转，但取“过屏幕中部”的那一圈（屏心距左上角 = 0.5×对角线）
   const EGG_R_MIN = 0.40, EGG_R_MAX = 0.62;
-  const INTRO_MS = 1200;       // 开屏星轨最短时长，蓝星出现后定格
+  const INTRO_MS = 1200;       // 蓝星扫进屏幕中部之后，再演多久才定格
   const STAR_DELAY_MS = 900;   // 各星推迟出现的最大延迟
-  const GUIDE_AUTO_MS = 5000;  // 黑磨砂定格时长，到点自动恢复
+  const GUIDE_AUTO_MS = 2000;  // 黑磨砂定格时长，到点自动恢复
 
   // 随机挑 2~3 颗当蓝星，强制包含第 0 颗 → 不会整轮没蓝星
   const eggIdx = new Set([0]);
@@ -491,6 +491,7 @@ html, body {
   // 开屏状态机：intro（星轨）→ guide（定格 + 黑磨砂 + 指示）→ live（可交互）
   let phase = 'intro';
   let paused = false;
+  let centerAt = 0;   // 蓝星首次扫进屏幕中部的时刻（计时从这里才开始）
   let liveAt = 0;
 
   function start() {
@@ -629,11 +630,14 @@ html, body {
 
     ctx.globalAlpha = 1;
 
-    // 星轨演够时长、且确有蓝星扫到屏幕中部 → 定格、蒙黑磨砂、指示蓝星
-    if (phase === 'intro' && elapsed * 1000 >= INTRO_MS && eggInCenter()) {
-      phase = 'guide';
-      paused = true;
-      showGuide();
+    // 蓝星一到屏幕中部才开始计时，演够 INTRO_MS 就定格
+    if (phase === 'intro') {
+      if (!centerAt && eggInCenter()) centerAt = elapsed;
+      if (centerAt && elapsed - centerAt >= INTRO_MS / 1000) {
+        phase = 'guide';
+        paused = true;
+        showGuide();
+      }
     }
 
     // 进入 live 后弹出 UI
