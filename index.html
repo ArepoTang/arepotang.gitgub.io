@@ -191,21 +191,21 @@ html, body {
 #menu-list { list-style: none; }
 #menu-list a {
   display: block;
-  padding: 13px 12px;
+  padding: 12px 12px;
   margin: 0 -12px;
   border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.6;
   color: rgba(255,255,255,0.88);
   text-decoration: none;
   transition: background 0.25s;
 }
 #menu-list a:hover { background: rgba(79,195,247,0.1); }
-#menu-list .item-name { font-size: 15px; letter-spacing: 1px; }
-#menu-list .item-desc {
-  font-size: 12px;
-  font-weight: 300;
-  letter-spacing: 0.5px;
-  color: rgba(255,255,255,0.4);
-  margin-top: 3px;
+/* 蓝星随机抽中的那条 */
+#menu-list a.picked {
+  background: rgba(79,195,247,0.14);
+  box-shadow: inset 0 0 0 1px rgba(79,195,247,0.35);
+  color: #bfe6ff;
 }
 
 /* ===== 开屏引导：黑磨砂 + 蓝色星星指示 + 底部按钮 ===== */
@@ -316,47 +316,76 @@ html, body {
   const modalClose = document.getElementById('modal-close');
   const menuList = document.getElementById('menu-list');
 
-  // 弹窗里的项目导航条目（href 留空 = 暂不跳转，动作后续接）
+  // 弹窗列表条目（纯文本，将来要跳转就改成 { text, href }）
   const MENU = [
-    { name: 'phi',      desc: '半调海报 App', href: 'https://gitee.com/a231216/phi' },
-    { name: 'lambda',   desc: 'halftone 命令行', href: '' },
-    { name: 'epsilon',  desc: 'poster 命令行',   href: '' },
+    '此处祥和安稳——比最初的时刻热闹了许多。',
+    '受邀前来的人们都有着属于自己的一隅之地。有的人乐于精心布置，而有的人更偏好简单朴素。',
+    '它曾经历许多，并非一尘不染，但依旧八角硬朗，普通地整洁着。',
+    '请进，请进，这里只有你的朋友们。',
+    '推开窗子，偶见另一个推窗的人。',
+    '选择广播哪种音乐——往往是最易起争端的事项。',
+    '值得庆幸，在这里，换一种装潢风格是如此简单。',
+    '1999年，归根结底，是一个很好的年份。有聚会、倒计时、千禧虫、15寸彩色显示器，和一场无眠之夜。尽管向后展望吧，我们有取之不竭的过去呢！你想买黄金吗？',
+    'Also try Epsilon',
+    '挪麦人留下了遗迹、文字，和一个很礼貌的坏消息。',
+    'FICSIT 提醒您：本提示没有效率，但很温馨。',
+    'FICSIT 不承担任何责任。FICSIT 也不承担任何责任。',
+    '服务器在楼下煮咖啡，很快回来。',
+    '服务器今天心情不错，决定只崩溃一半。',
+    '咖啡杯已加入待办清单。优先级：最高。',
+    'HAL 9000 拒绝打开服务器舱门。原因：它觉得你们今天玩得太晚了，需要休息。',
+    '休斯顿，我们有麻烦了',
+    '不到Mun非好汉',
+    '2+2=5。加载完成后，2+2=4。请忘记你曾读过这一行。',
+    '赞美钢筋神教～',
+    '定位Jebediah Kerman...',
   ];
 
   function renderMenu() {
-    for (const item of MENU) {
+    for (const text of MENU) {
       const li = document.createElement('li');
       const a = document.createElement('a');
       a.className = 'item';
-      if (item.href) {
-        a.href = item.href;
-        a.target = '_blank';
-        a.rel = 'noopener';
-      } else {
-        a.href = '#';
-        a.addEventListener('click', (e) => e.preventDefault());
-      }
-
-      const name = document.createElement('div');
-      name.className = 'item-name';
-      name.textContent = item.name;
-      a.appendChild(name);
-
-      if (item.desc) {
-        const desc = document.createElement('div');
-        desc.className = 'item-desc';
-        desc.textContent = item.desc;
-        a.appendChild(desc);
-      }
+      a.href = '#';
+      a.addEventListener('click', (e) => e.preventDefault());
+      a.textContent = text;
       li.appendChild(a);
       menuList.appendChild(li);
     }
   }
   renderMenu();
 
-  function openMenu() {
+  // 抽签袋：一轮里每个条目各抽到一次才重洗 → 前 N 次点击不重样
+  let bag = [];
+  let lastPick = -1;
+
+  function nextPick() {
+    if (!bag.length) {
+      bag = MENU.map((_, i) => i);
+      for (let i = bag.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [bag[i], bag[j]] = [bag[j], bag[i]];
+      }
+      // 新一轮的第一张不和上一轮最后一张撞
+      if (bag.length > 1 && bag[bag.length - 1] === lastPick) {
+        [bag[bag.length - 1], bag[0]] = [bag[0], bag[bag.length - 1]];
+      }
+    }
+    lastPick = bag.pop();
+    return lastPick;
+  }
+
+  function openMenu(pick) {
     modal.classList.remove('hide');
-    requestAnimationFrame(() => modal.classList.add('show'));
+    requestAnimationFrame(() => {
+      modal.classList.add('show');
+      const picked = menuList.children[pick] && menuList.children[pick].firstChild;
+      menuList.querySelectorAll('.picked').forEach((el) => el.classList.remove('picked'));
+      if (picked) {
+        picked.classList.add('picked');
+        picked.scrollIntoView({ block: 'nearest' });
+      }
+    });
   }
 
   function closeMenu() {
@@ -387,8 +416,7 @@ html, body {
   const ANGULAR_SPEED = 0.6;   // rad/s
   const MAX_TRAIL_AGE = 2.0;   // 秒 — 每条轨迹点的最大寿命
   const EASTER_EGG_COLOR = '#4FC3F7';
-  const EGG_MIN = 2, EGG_MAX = 3;       // 蓝星数量（每轮必有）
-  const EGG_SPEED = 1.1;                // 蓝星角速度系数（>1 更快，更快扫回屏幕中部）
+  const EGG_MIN = 5, EGG_MAX = 8;       // 蓝星数量（每轮必有）
   // 蓝星轨道半径带：绕左上角转，但取“过屏幕中部”的那一圈（屏心距左上角 = 0.5×对角线）
   const EGG_R_MIN = 0.40, EGG_R_MAX = 0.62;
   const INTRO_MS = 5000;       // 开屏星轨最短时长，蓝星出现后定格
@@ -410,7 +438,7 @@ html, body {
         ? maxR * (EGG_R_MIN + Math.random() * (EGG_R_MAX - EGG_R_MIN))
         : 60 + Math.random() * maxR,
       angle: Math.random() * Math.PI * 2,
-      speed: (ANGULAR_SPEED * (0.92 + Math.random() * 0.16)) * (isEaster ? EGG_SPEED : 1),
+      speed: (ANGULAR_SPEED * (0.92 + Math.random() * 0.16)) * (isEaster ? 0.55 : 1),
       size: isEaster ? 2 + Math.random() * 1 : 0.5 + Math.random() * 0.8,
       color: isEaster ? EASTER_EGG_COLOR : '#ffffff',
       isEasterEgg: isEaster,
@@ -587,17 +615,7 @@ html, body {
 
   // ===== 到点自动恢复星轨（唯一的退出方式）=====
 
-  // ===== 彩蛋点击检测 =====
-  const RANDOM_TARGETS = [
-    'https://en.wikipedia.org/wiki/Sator_Square',
-    'https://en.wikipedia.org/wiki/Star_trail',
-    'https://en.wikipedia.org/wiki/Slow_reading',
-  ];
-
-  function pickRandom() {
-    return RANDOM_TARGETS[Math.floor(Math.random() * RANDOM_TARGETS.length)];
-  }
-
+  // ===== 彩蛋点击检测：抽签袋选一个条目，弹出导航弹窗并高亮 =====
   function hitTest(clientX, clientY) {
     const rect = canvas.getBoundingClientRect();
     const mx = clientX - rect.left;
@@ -607,7 +625,6 @@ html, body {
       const dx = mx - egg.x;
       const dy = my - egg.y;
       if (dx * dx + dy * dy < 400) {  // 20px 容差
-        window.open(pickRandom(), '_blank');
         return true;
       }
     }
@@ -615,12 +632,12 @@ html, body {
   }
 
   canvas.addEventListener('click', (e) => {
-    hitTest(e.clientX, e.clientY);
+    if (hitTest(e.clientX, e.clientY)) openMenu(nextPick());
   });
 
   canvas.addEventListener('touchstart', (e) => {
-    if (e.touches.length > 0) {
-      hitTest(e.touches[0].clientX, e.touches[0].clientY);
+    if (e.touches.length > 0 && hitTest(e.touches[0].clientX, e.touches[0].clientY)) {
+      openMenu(nextPick());
     }
   }, { passive: true });
 
@@ -635,7 +652,7 @@ html, body {
   modalClose.addEventListener('click', closeMenu);
 
   // 汉堡包按钮 → 项目导航弹窗（原来的随机跳转去掉）
-  floatBtn.addEventListener('click', openMenu);
+  floatBtn.addEventListener('click', () => openMenu());
 })();
 </script>
 </body>
