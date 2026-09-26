@@ -605,6 +605,9 @@ html, body {
 
 /* 下方文案：三段都在，只显示选中的那段 */
 #page-body .seg-out { margin-top: 18px; }
+/* 调参指南只在选中「便携」时露出 */
+#page-body .guide { display: none; }
+#dl-portable:checked ~ .guide { display: block; }
 #page-body .seg-out .out {
   display: none;
   font-size: 14px;
@@ -824,7 +827,7 @@ cd lambda</code></pre>
 <p>下载地址：<br><a class="btn" href="https://gitee.com/a231216/phi/releases/download/V0.1/phi-0.1-arm64-v8a-release.apk" target="_blank" rel="noopener">phi-0.1-arm64-v8a-release.apk</a></p>
     </div>
   </div>
-</div>
+<div class="guide">
 <h3>Phi 调参指南</h3>
 <h4>一、操作流程</h4>
 <ol><li>选择文件 —— Android 上走系统文件选择器</li><li>选方案 —— 上面那排 5 档切换器，左二右三</li><li>简单 / 复杂 —— 简单只露常用滑块；复杂把高级参数全摊开（顺便多出 YAML 存档）</li><li>生 成 —— 下面出图，图下一行字是这次处理的说明（耗时 / 尺寸）</li><li>保存图片 —— Android 弹系统「另存为」，自己挑目录</li></ol>
@@ -853,7 +856,9 @@ cd lambda</code></pre>
 <table><thead><tr><th>想要</th><th>怎么调</th></tr></thead><tbody><tr><td>更像老报纸</td><td>美漫：纸色 <code>#f2ead8</code> + 色板 benday + 暗点变暗 0.5；或半调黑白：点距 14–18 + <code>#ffeedd</code> 底</td></tr><tr><td>线条更干净</td><td>日漫：T 40–50、R 2；再把「网点留白」调小（80–85）少铺网点</td></tr><tr><td>网纹太规律 / 有摩尔纹</td><td>半调：抖动 0.25–0.4、角度换 15 或 75；别关预模糊</td></tr><tr><td>深色区有白缝</td><td>半调：勾「点覆盖格角」；美漫/平铺：色数调大一点</td></tr><tr><td>出图太灰、层次不清</td><td>调小「网点留白」（网点少一点）、明暗档数降到 3</td></tr><tr><td>出图太糊</td><td>长边上限调到 4096；半调把点距调小（&lt;10 会自动放大）</td></tr><tr><td>处理太慢</td><td>长边上限降到 1600 / 点距 ≥ 12 / 线粗 R 别用 4</td></tr></tbody></table>
 <h4>十、报错都是什么</h4>
 <p>生成图存在应用私有目录（/data/data/com.phi.io/files/app/.work/…），文件管理器里看不见，</p>
-<p>所以要留图只能走「保存图片」；每次启动 App 会自动清掉上一轮留下的结果图。</p>`;
+<p>所以要留图只能走「保存图片」；每次启动 App 会自动清掉上一轮留下的结果图。</p>
+</div>
+</div>`;
 
   // 汉堡菜单的内容；body 是详情页正文的 HTML 片段（直接写标签，如 <button class="btn">）
   const PROJECTS = [
