@@ -1056,8 +1056,8 @@ cd lambda</code></pre>
         ? maxR * (EGG_R_MIN + Math.random() * (EGG_R_MAX - EGG_R_MIN))
         : 60 + Math.random() * maxR,
       angle: Math.random() * Math.PI * 2,
-      speed: (ANGULAR_SPEED * (0.92 + Math.random() * 0.16)) * (isEaster ? 0.55 : 1),
-      size: isEaster ? 2 + Math.random() * 1 : 0.5 + Math.random() * 0.8,
+      speed: ANGULAR_SPEED * (0.92 + Math.random() * 0.16),
+      size: 0.5 + Math.random() * 0.8,
       color: isEaster ? EASTER_EGG_COLOR : '#ffffff',
       isEasterEgg: isEaster,
       delay: Math.random() * (STAR_DELAY_MS / 1000),
@@ -1161,23 +1161,9 @@ cd lambda</code></pre>
         ctx.fill();
       }
 
-      // --- 彩蛋辉光 ---
+      // 蓝星：外表和普通星一样，只是颜色不同，但要可点
       if (s.isEasterEgg && len > 0) {
-        const p = s.trail[len - 1];
-        // 外层柔光
-        ctx.globalAlpha = 0.12;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, s.size + 8, 0, Math.PI * 2);
-        ctx.fillStyle = EASTER_EGG_COLOR;
-        ctx.fill();
-        // 内层亮光
-        ctx.globalAlpha = 0.25;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, s.size + 3, 0, Math.PI * 2);
-        ctx.fillStyle = EASTER_EGG_COLOR;
-        ctx.fill();
-        // 记录可点击位置
-        clickableEggs.push({ x: p.x, y: p.y });
+        clickableEggs.push({ x: s.trail[len - 1].x, y: s.trail[len - 1].y });
       }
     }
 
