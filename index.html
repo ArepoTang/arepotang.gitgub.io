@@ -860,10 +860,44 @@ cd lambda</code></pre>
 </div>
 </div>`;
 
+  // halftone（lambda）命令行说明：design.md 转成的 HTML
+  const LAMBDA_HTML = `<p><code>halftone.py</code> 是一个 CLI 工具，将彩色/灰度图像转换为报纸风格的圆点半调效果。它基于均匀采样的网格，在每個采样点绘制一个实心或空心的圆形网点，半径取决于该位置的图像亮度。项目地址：<a href="https://gitee.com/a231216/lambda" target="_blank" rel="noopener">https://gitee.com/a231216/lambda</a></p>
+<h2>核心算法</h2>
+<h3>1. 预处理：高斯模糊（默认开启，可关闭）</h3>
+<p>每个网点对应输入图像的一个固定尺寸网格单元。为避免摩尔纹和边缘锯齿，在采样前先对原图施加各向同性高斯模糊，模糊半径 = grid_size / 2。</p>
+<p>当 grid &lt; 10px 时自动等比例上采样图片，使网格尺寸不低于 10px，保证每个网点至少有 10×10 像素呈现圆形。</p>
+<p>对于清晰的设计稿（无噪声、边缘锐利），可用 <code>--no-blur</code> 关掉模糊，直接采样原始像素值。</p>
+<h3>2. 网格划分</h3>
+<p>将图像划分为 NxM 个网格：</p>
+<ul><li>N = ceil(width / grid_size)</li><li>M = ceil(height / grid_size)</li></ul>
+<h3>3. 交错排列（砖墙模式）</h3>
+<ul><li>偶数行：起点 (0, 0)</li><li>奇数行：起点 (grid_size/2, 0)</li></ul>
+<p>这打破了规则的行列对齐，使网点分布更自然、无明显网格线。</p>
+<h3>4. 灰度映射</h3>
+<p>每个网格中心点的像素灰度值（0-255）通过以下步骤映射为网点半径：</p>
+<ol><li>（可选）应用 Gamma 校正：<code>val = 255 * (gray/255)^(1/gamma)</code></li><li>（可选）反相：<code>val = 255 - val</code></li><li>映射到半径：<code>radius = (1 - val/255) * (grid_size / 2)</code> — 暗处点大（墨点覆盖暗区），亮处点小</li><li>如果 radius &lt; 1px，跳过该网点（亮区域自然留白）</li></ol>
+<h3>5. 渲染样式</h3>
+<ul><li><strong>solid</strong>: 直接绘制填充椭圆（Pillow antialiased）</li><li><strong>outline</strong>: 先画一个白色内圆覆盖，再画一个黑色外圆形成描边效果</li><li><strong>both</strong>: 每个网点随机（由 --seed 控制）选择是否叠加描边层，模拟印刷 CMYK 错位感</li></ul>
+<h3>5.5 圆心抖动 (<code>--jitter</code>)</h3>
+<p>AM 加网（固定间距）在大块纯色区域会产生周期阵列，与输出设备的像素栅格干涉形成摩尔纹。<code>--jitter</code> 在每个网格单元内随机偏移圆心位置，偏移量 = 网格半宽 × jitter（0.0-1.0），打破周期规律：</p>
+<ul><li>偏移后的圆允许溢出格子边界（溢出进一步打破规律性，Pillow 在画布边缘自然裁切）</li><li>抖动由随机数驱动，<code>--seed</code> 控制可复现性</li><li>与 both 风格共用随机序列，同一种子下可复现完整输出</li></ul>
+<h3>5.6 内切圆 vs 外接圆 (<code>--circumscribe</code>)</h3>
+<ul><li>默认<strong>内切圆</strong>：最大半径 = grid/2，圆恰好内切于网格单元，四角留白</li><li><code>--circumscribe</code>：最大半径 = grid/√2 ≈ 0.707×grid，圆外接于网格单元，覆盖四角，深色区域连成实底无空白</li><li>外接圆在深色区相邻网点重叠，是印刷&quot;实底&quot;的正常机制</li><li>中间调网点同样按比例放大，缓解大色块&quot;页面过淡&quot;</li></ul>
+<h3>6. 输出</h3>
+<ul><li>格式：PNG，以 RGB 模式存储</li><li>画布背景色默认米黄纸色 (255,238,221)，可用 <code>--bg</code> 自定义（R,G,B 或 #RRGGBB）</li><li>单色模式网点颜色默认深蓝 (17,51,85)，可用 <code>--dot</code> 自定义；彩色模式网点取原图颜色</li><li>分辨率：与输入图片完全一致（或上采样后的尺寸）</li><li>边缘网点：自然裁切，不进行 padding</li></ul>
+<h3>7. 彩色半调 (<code>--color</code>)</h3>
+<p>每个网格点直接采样原图的 RGB 颜色，网点填充该颜色；网点半径由该位置的亮度（灰度）决定，映射逻辑与黑白模式完全相同。<code>--invert</code> 在彩色模式下不生效（只翻转半径而不翻转颜色没有意义，会打印提示）。<code>--dot</code> 同样被忽略，<code>--bg</code> 仍然有效。&quot;色块是什么颜色，网点就是什么颜色&quot;——不进行分色、不加网角、不叠印合成。</p>
+<h2>依赖</h2>
+<p>仅 Pillow (<code>pip install Pillow</code>)。无需 NumPy、scikit-image 等其他库。</p>
+<h2>参数说明</h2>
+<table><thead><tr><th>参数</th><th>类型</th><th>默认</th><th>说明</th></tr></thead><tbody><tr><td><code>input</code></td><td>positional</td><td>—</td><td>输入图片路径</td></tr><tr><td><code>output</code></td><td>positional</td><td>—</td><td>输出 PNG 路径</td></tr><tr><td><code>--grid</code></td><td>int</td><td>12</td><td>网格间距（像素）</td></tr><tr><td><code>--style</code></td><td>enum</td><td>solid</td><td>solid / outline / both</td></tr><tr><td><code>--invert</code></td><td>flag</td><td>false</td><td>反相灰度映射</td></tr><tr><td><code>--gamma</code></td><td>float</td><td>none</td><td>Gamma 校正值（0.1-5.0），必须显式设置</td></tr><tr><td><code>--seed</code></td><td>int</td><td>auto</td><td>随机种子（both 模式下确定网点描边分配）</td></tr><tr><td><code>--no-blur</code></td><td>flag</td><td>false</td><td>关闭高斯模糊预处理</td></tr><tr><td><code>--color</code></td><td>flag</td><td>false</td><td>彩色半调：网点使用原图颜色</td></tr><tr><td><code>--jitter</code></td><td>float</td><td>0.0</td><td>圆心抖动比例（0.0-1.0），打破大色块摩尔纹</td></tr><tr><td><code>--outline-ratio</code></td><td>float</td><td>0.5</td><td>both 样式描边网点比例（0.0-1.0）</td></tr><tr><td><code>--circumscribe</code></td><td>flag</td><td>false</td><td>外接圆（grid/√2），消除深色大色块四角空白</td></tr><tr><td><code>--bg</code></td><td>str</td><td>255,238,221</td><td>画布背景色（R,G,B 或 #RRGGBB）</td></tr><tr><td><code>--dot</code></td><td>str</td><td>17,51,85</td><td>单色模式网点色（R,G,B 或 #RRGGBB）</td></tr></tbody></table>
+<h2>限制与已知问题</h2>
+<ul><li>不支持 GIF/动画。静态帧仅。</li><li>输入文件必须是 Pillow 支持读取的格式（PNG/JPG/BMP/TIFF/WebP 等）。</li><li>超大图片（如 10000x10000px）处理时间较长，因为逐点遍历所有网格。</li><li>Antialiasing 依赖于 Pillow 内部实现，不同版本行为可能有微小差异。</li></ul>`;
+
   // 汉堡菜单的内容；body 是详情页正文的 HTML 片段（直接写标签，如 <button class="btn">）
   const PROJECTS = [
-    { id: 'phi',     text: 'Phi',     desc: 'Epsilob和Lambda移动端移植',    href: 'https://gitee.com/a231216/phi', theme: 'cardboard', body: PHI_HTML },
-    { id: 'lambda',  text: 'lambda',  desc: 'halftone 命令行', href: '', theme: 'halftone', body: '' },
+    { id: 'phi',     text: 'Phi',     desc: 'Epsilob和Lambda移动端移植',    href: '', theme: 'cardboard', body: PHI_HTML },
+    { id: 'lambda',  text: 'lambda',  desc: 'halftone 命令行', href: '', theme: 'halftone', body: LAMBDA_HTML },
     { id: 'epsilon', text: 'epsilon', desc: 'poster 命令行',   href: '', theme: 'newspaper', body: '' },
   ];
 
