@@ -59,6 +59,25 @@ html, body {
   overflow-wrap: break-word;
 }
 
+/* ===== 顶部提示条：蓝星刚到屏幕中间时冒一下 ===== */
+#hint {
+  position: fixed;
+  top: max(24px, env(safe-area-inset-top));
+  left: 50%;
+  font-size: 14px;
+  font-weight: 300;
+  letter-spacing: 4px;
+  color: rgba(255,255,255,0.85);
+  text-shadow: 0 1px 10px rgba(0,0,0,0.6);
+  opacity: 0;
+  transform: translate(-50%, -12px);
+  transition: opacity 0.7s ease-out, transform 0.7s ease-out;
+  pointer-events: none;
+  z-index: 10;
+  user-select: none;
+}
+#hint.show { opacity: 1; transform: translate(-50%, 0); }
+
 /* ===== 悬浮按钮 右下角 ===== */
 #float-btn {
   position: fixed;
@@ -594,6 +613,8 @@ html, body {
   <!-- 社交链接已移除 -->
 </div>
 
+<div id="hint" role="status">看蓝星</div>
+
 <button id="float-btn" aria-label="菜单"></button>
 
 <div id="modal" class="hide" role="dialog" aria-modal="true">
@@ -626,6 +647,7 @@ html, body {
   const ctx = canvas.getContext('2d');
   const ui = document.getElementById('ui');
   const floatBtn = document.getElementById('float-btn');
+  const hint = document.getElementById('hint');
   const modal = document.getElementById('modal');
   const modalClose = document.getElementById('modal-close');
   const modalTitle = document.getElementById('modal-title');
@@ -1043,6 +1065,7 @@ cd lambda</code></pre>
   const HINT_SEC = 1.8;        // 开屏那一下「这个能点」强调持续多久
   const HINT_RING = 90;        // 强调圈最大半径比星头大多少 px
   const HINT_GROW = 0.35;      // 星头放大回落的时长（秒）
+  const HINT_TEXT_MS = 4000;   // 顶部「看蓝星」停留多久
   const STAR_DELAY_MS = 900;   // 各星推迟出现的最大延迟
 
   // 随机挑 2~3 颗当蓝星，强制包含第 0 颗 → 不会整轮没蓝星
@@ -1089,6 +1112,18 @@ cd lambda</code></pre>
     phase = 'live';
     lastTime = performance.now();
     liveAt = (lastTime - startTime) / 1000;
+  }
+
+  // 顶部提示条：和那颗“被强调”的蓝星同时出现，过后自己消失
+  let hintTimer = null;
+  function showHint() {
+    hint.classList.add('show');
+    clearTimeout(hintTimer);
+    hintTimer = setTimeout(hideHint, HINT_TEXT_MS);
+  }
+  function hideHint() {
+    clearTimeout(hintTimer);
+    hint.classList.remove('show');
   }
 
   // 扫进屏幕中部的蓝星（没有则 null）：开屏计时与一次性强调都用这个信号
@@ -1174,18 +1209,18 @@ cd lambda</code></pre>
       }
 
       // --- 开屏那一下强调：被选中的蓝星，一圈大光圈 + 星头短暂放大 ---
-      const hint = s === hintStar ? (elapsed - hintAt) / HINT_SEC : 1;
-      if (hint < 1 && hint >= 0 && len > 0) {
+      const em = s === hintStar ? (elapsed - hintAt) / HINT_SEC : 1;
+      if (em < 1 && em >= 0 && len > 0) {
         const p = s.trail[len - 1];
-        ctx.globalAlpha = (1 - hint) * 0.45;
+        ctx.globalAlpha = (1 - em) * 0.45;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, s.size + hint * HINT_RING, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, s.size + em * HINT_RING, 0, Math.PI * 2);
         ctx.fillStyle = EASTER_EGG_COLOR;
         ctx.fill();
       }
       // 前 HINT_GROW 秒星头撑到 2.2 倍再回落
-      const grow = s === hintStar && hint >= 0 && hint < HINT_GROW / HINT_SEC
-        ? 1 + 1.2 * (1 - hint / (HINT_GROW / HINT_SEC))
+      const grow = s === hintStar && em >= 0 && em < HINT_GROW / HINT_SEC
+        ? 1 + 1.2 * (1 - em / (HINT_GROW / HINT_SEC))
         : 1;
 
       // --- 当前点发光 ---
@@ -1205,7 +1240,7 @@ cd lambda</code></pre>
     if (phase === 'intro') {
       if (!centerAt) {
         const s = centerEgg();
-        if (s) { centerAt = elapsed; hintStar = s; hintAt = elapsed; }
+        if (s) { centerAt = elapsed; hintStar = s; hintAt = elapsed; showHint(); }
       }
       if (centerAt && elapsed - centerAt >= INTRO_MS / 1000) start();
     }
@@ -1247,7 +1282,7 @@ cd lambda</code></pre>
 
   // 只用 click：touchstart + 同一次触摸补发的 click 会开完又被磨砂背景关掉
   canvas.addEventListener('click', (e) => {
-    if (hitTest(e.clientX, e.clientY)) openEgg();
+    if (hitTest(e.clientX, e.clientY)) { hideHint(); openEgg(); }
   });
 
   // 点磨砂背景 / Esc 关闭

@@ -58,6 +58,11 @@ function blueHeads() {
   }
   return out;
 }
+let fails = 0;
+function check(label, cond, extra) {
+  if (!cond) fails++;
+  console.log((cond ? '✅ ' : '❌ ') + label + (extra ? '  ' + extra : ''));
+}
 function fire(x, y) { els.modal.classList.add('hide'); canvas._fire('click', { clientX: x, clientY: y }); return !els.modal.classList.contains('hide'); }
 
 const ringR = [], ringA = [], headA = [];
@@ -69,32 +74,43 @@ for (let i = 0; i < 400; i++) {
   }
 }
 const blues = blueHeads();
-console.log('第 400 帧：蓝星 ' + blues.length + ' 颗，UI 已淡入 ' + els.ui.classList.contains('visible'));
-console.log('点蓝星头部：' + blues.map(b => fire(b.x, b.y) ? '✅' : '❌').join(''));
-console.log('贴着头偏 19px 命中 ' + (fire(blues[0].x + 19, blues[0].y) ? '✅' : '❌'));
+check('第 400 帧有蓝星可点', blues.length > 0, blues.length + ' 颗');
+check('底部栏 UI 已淡入', els.ui.classList.contains('visible'));
+check('顶部提示条「看蓝星」弹过', els.hint.classList.contains('show'));
+
+let hitAll = blues.every((b) => fire(b.x, b.y));
+check('每个蓝星头部都点得到', hitAll, blues.length + ' 颗');
+check('贴着头偏 19px 命中', fire(blues[0].x + 19, blues[0].y));
+
 // 沿轨迹偏 40px 也该中（整条蓝线可点是有意为之），所以这里用「垂直轨迹」方向判不中
 let miss = 0;
 for (const b of blues) {
   const n = Math.hypot(b.x, b.y) || 1;
   if (!fire(b.x + (b.x / n) * 40, b.y + (b.y / n) * 40)) miss++;
 }
-console.log('垂直轨迹偏 40px 不中: ' + miss + '/' + blues.length + ' ' + (miss >= blues.length * 0.8 ? '✅' : '❌'));
+check('垂直轨迹偏 40px 不中', miss >= blues.length * 0.8, miss + '/' + blues.length);
 
 // 回归：手指落下 → click 之间的时延，星星已跑走
-const lines = [];
-for (const lag of [0, 80, 160, 240, 400, 700]) {
+const lagOk = [];
+for (const lag of [0, 80, 160, 240, 400]) {
   events = []; step(16);
-  const head = blueHeads()[0];
-  if (!head) { lines.push(lag + 'ms: 无蓝星'); continue; }
+  const h = blueHeads()[0];
   for (let i = 0; i < Math.round(lag / 16); i++) { events = []; step(16); }
-  lines.push('延迟 ' + String(lag).padStart(3) + 'ms 点旧位置: ' + (fire(head.x, head.y) ? '✅ 命中' : '❌ 点不到'));
+  lagOk.push(fire(h.x, h.y));
 }
-console.log(lines.join('\n'));
+check('输入延迟 0~400ms 点旧位置仍命中', lagOk.every(Boolean), lagOk.map((v) => (v ? '✅' : '❌')).join(''));
+events = []; step(16);
+const stale = blueHeads()[0];
+for (let i = 0; i < 60; i++) { events = []; step(16); }   // ~1s 后
+check('延迟 1s 的旧位置点不到（窗口是 0.5s）', !fire(stale.x, stale.y));
 
-// ===== 观感检查：蓝星要会闪 + 外扩一圈半透明圆（开屏那一下更远更亮）=====
+// 观感：闪烁 + 外扩圈（含开屏那一下强调）
 const lo = Math.min(...headA), hi = Math.max(...headA);
-console.log('星头一带透明度 min ' + lo.toFixed(2) + ' / max ' + hi.toFixed(2) + ' → 闪烁 ' + (hi - lo > 0.3 && lo < 0.6 ? '✅' : '❌'));
-const rMin = Math.min(...ringR), rMax = Math.max(...ringR), aMax = Math.max(...ringA), aMin = Math.min(...ringA);
-console.log('外扩圈半径 ' + rMin.toFixed(1) + '→' + rMax.toFixed(1) + 'px，透明度 ' + aMin.toFixed(2) + '~' + aMax.toFixed(2) + ' → '
-  + (rMax > 20 && aMax > 0.25 && aMin < 0.08 ? '✅ 越往外越淡' : '❌'));
-console.log('开屏一次性强调圈（半径 >60px）: ' + (rMax > 60 ? '✅ 出现过' : '❌ 没出现'));
+check('蓝星在闪烁', hi - lo > 0.3 && lo < 0.6, 'alpha ' + lo.toFixed(2) + '~' + hi.toFixed(2));
+const rMax = Math.max(...ringR), aMax = Math.max(...ringA), aMin = Math.min(...ringA);
+check('外扩圈半径够远且越来越淡', rMax > 20 && aMax > 0.25 && aMin < 0.08,
+  Math.min(...ringR).toFixed(1) + '→' + rMax.toFixed(1) + 'px, alpha ' + aMin.toFixed(2) + '~' + aMax.toFixed(2));
+check('开屏一次性强调圈出现过（半径 >60px）', rMax > 60);
+
+console.log('\n' + (fails ? '❌ ' + fails + ' 项不通过' : '✅ 全部通过'));
+process.exit(fails ? 1 : 0);
