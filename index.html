@@ -404,8 +404,6 @@ html, body {
   border: 1px solid rgba(20,48,92,0.28);
   overflow: hidden;
   background-color: #f2ede1;
-  background-image: radial-gradient(circle, rgba(20,48,92,0.13) 0.6px, transparent 0.95px);
-  background-size: 6px 6px;
   box-shadow: 0 18px 44px rgba(0,0,0,0.45), inset 0 0 60px rgba(20,48,92,0.05);
   color: #14305c;
 }
@@ -421,31 +419,7 @@ html, body {
     radial-gradient(circle, #14305c 1.7px, transparent 2px);
   background-size: auto, 7px 7px;
 }
-/* 标题与小标题用网点填充（半调字），正文保持实色保证可读 */
-#page[data-theme="halftone"] #page-title,
-#page[data-theme="halftone"] #page-body h2,
-#page[data-theme="halftone"] #page-body h3 {
-  background-image: radial-gradient(circle, #14305c 0.9px, transparent 1.2px);
-  background-size: 4px 4px;
-  color: #14305c;
-}
-@supports (-webkit-background-clip: text) {
-  #page[data-theme="halftone"] #page-title,
-  #page[data-theme="halftone"] #page-body h2,
-  #page[data-theme="halftone"] #page-body h3 {
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
-  }
-  /* 嵌套行内标签恢复实色，否则会继承成透明看不见 */
-  #page[data-theme="halftone"] #page-title *,
-  #page[data-theme="halftone"] #page-body h2 *,
-  #page[data-theme="halftone"] #page-body h3 * {
-    -webkit-text-fill-color: #14305c;
-    color: #14305c;
-  }
-}
+#page[data-theme="halftone"] #page-title { color: #14305c; }
 #page[data-theme="halftone"] #page-desc { color: rgba(20,48,92,0.6); }
 #page[data-theme="halftone"] #page-body { color: rgba(20,48,92,0.85); --line: rgba(20,48,92,0.3); --pick-bg: #14305c; --pick-fg: #f2ede1; }
 #page[data-theme="halftone"] #page-link {
