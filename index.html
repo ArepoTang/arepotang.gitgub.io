@@ -209,15 +209,7 @@ html, body {
   margin-top: 3px;
 }
 
-/* ===== 开屏引导：黑磨砂 + 蓝色星星指示 + 底部按钮 ===== */
-#guide {
-  position: fixed;
-  inset: 0;
-  z-index: 20;
-}
-#guide.hide { display: none; }
-
-/* ===== 磨砂层（开屏引导 / 弹窗共用）===== */
+/* ===== 磨砂层（弹窗 / 详情页共用）===== */
 .frost {
   position: absolute;
   inset: 0;
@@ -227,7 +219,6 @@ html, body {
   opacity: 0;
   transition: opacity 0.9s ease;
 }
-#guide.show .frost,
 #modal.show .frost { opacity: 1; }
 #modal .frost { transition-duration: 0.35s; }
 
@@ -614,10 +605,6 @@ html, body {
   </div>
 </div>
 
-<div id="guide" class="hide">
-  <div class="frost"></div>
-</div>
-
 <div id="page" class="hide">
   <div class="frost"></div>
   <button id="page-back" aria-label="返回">←</button>
@@ -639,7 +626,6 @@ html, body {
   const ctx = canvas.getContext('2d');
   const ui = document.getElementById('ui');
   const floatBtn = document.getElementById('float-btn');
-  const guide = document.getElementById('guide');
   const modal = document.getElementById('modal');
   const modalClose = document.getElementById('modal-close');
   const modalTitle = document.getElementById('modal-title');
@@ -1051,9 +1037,8 @@ cd lambda</code></pre>
   const EGG_MIN = 5, EGG_MAX = 8;       // 蓝星数量（每轮必有）
   // 蓝星轨道半径带：绕左上角转，但取“过屏幕中部”的那一圈（屏心距左上角 = 0.5×对角线）
   const EGG_R_MIN = 0.40, EGG_R_MAX = 0.62;
-  const INTRO_MS = 1200;       // 蓝星扫进屏幕中部之后，再演多久才定格
+  const INTRO_MS = 1200;       // 蓝星扫进屏幕中部之后，再演多久才进入可交互
   const STAR_DELAY_MS = 900;   // 各星推迟出现的最大延迟
-  const GUIDE_AUTO_MS = 2000;  // 黑磨砂定格时长，到点自动恢复
 
   // 随机挑 2~3 颗当蓝星，强制包含第 0 颗 → 不会整轮没蓝星
   const eggIdx = new Set([0]);
@@ -1086,20 +1071,16 @@ cd lambda</code></pre>
   let lastTime = null;
   let uiShown = false;
 
-  // 开屏状态机：intro（星轨）→ guide（定格 + 黑磨砂 + 指示）→ live（可交互）
+  // 开屏状态机：intro（星轨）→ live（可交互）
   let phase = 'intro';
-  let paused = false;
   let centerAt = 0;   // 蓝星首次扫进屏幕中部的时刻（计时从这里才开始）
   let liveAt = 0;
 
   function start() {
-    if (phase !== 'guide') return;
+    if (phase !== 'intro') return;
     phase = 'live';
-    paused = false;
     lastTime = performance.now();
     liveAt = (lastTime - startTime) / 1000;
-    guide.classList.remove('show');
-    setTimeout(() => guide.classList.add('hide'), 900);
   }
 
   function eggInCenter() {
@@ -1108,18 +1089,7 @@ cd lambda</code></pre>
     );
   }
 
-  function showGuide() {
-    guide.classList.remove('hide');
-    requestAnimationFrame(() => guide.classList.add('show'));
-    setTimeout(start, GUIDE_AUTO_MS);
-  }
-
   function loop(timestamp) {
-    if (paused) {
-      requestAnimationFrame(loop);
-      return;
-    }
-
     if (!startTime) {
       startTime = timestamp;
       lastTime = timestamp;
@@ -1213,14 +1183,10 @@ cd lambda</code></pre>
 
     ctx.globalAlpha = 1;
 
-    // 蓝星一到屏幕中部才开始计时，演够 INTRO_MS 就定格
+    // 蓝星一到屏幕中部才开始计时，演够 INTRO_MS 就进入可交互
     if (phase === 'intro') {
       if (!centerAt && eggInCenter()) centerAt = elapsed;
-      if (centerAt && elapsed - centerAt >= INTRO_MS / 1000) {
-        phase = 'guide';
-        paused = true;
-        showGuide();
-      }
+      if (centerAt && elapsed - centerAt >= INTRO_MS / 1000) start();
     }
 
     // 进入 live 后弹出 UI
