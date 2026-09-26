@@ -231,47 +231,6 @@ html, body {
 #modal.show .frost { opacity: 1; }
 #modal .frost { transition-duration: 0.35s; }
 
-#markers {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  transition: opacity 0.9s ease 0.45s;
-  pointer-events: none;
-}
-#guide.show #markers { opacity: 1; }
-
-/* 蓝色星星指示点 */
-.spot {
-  position: absolute;
-  width: 14px;
-  height: 14px;
-  margin: -7px 0 0 -7px;
-}
-.spot::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: #4FC3F7;
-  box-shadow: 0 0 14px #4FC3F7, 0 0 34px rgba(79,195,247,0.75);
-}
-.spot::after {
-  content: '';
-  position: absolute;
-  inset: -9px;
-  border-radius: 50%;
-  border: 1px solid rgba(79,195,247,0.6);
-  animation: spotPulse 2.4s ease-out infinite;
-}
-@keyframes spotPulse {
-  0%   { transform: scale(0.6); opacity: 0.9; }
-  80%, 100% { transform: scale(2.4); opacity: 0; }
-}
-/* 主目标：离屏幕中心最近的那颗 */
-.spot.main { width: 20px; height: 20px; margin: -10px 0 0 -10px; }
-.spot.main::after { inset: -13px; border-color: rgba(79,195,247,0.85); }
-
-
 /* ===== 项目详情页（锚点 #id）===== */
 #page {
   position: fixed;
@@ -657,7 +616,6 @@ html, body {
 
 <div id="guide" class="hide">
   <div class="frost"></div>
-  <div id="markers"></div>
 </div>
 
 <div id="page" class="hide">
@@ -682,7 +640,6 @@ html, body {
   const ui = document.getElementById('ui');
   const floatBtn = document.getElementById('float-btn');
   const guide = document.getElementById('guide');
-  const markers = document.getElementById('markers');
   const modal = document.getElementById('modal');
   const modalClose = document.getElementById('modal-close');
   const modalTitle = document.getElementById('modal-title');
@@ -1152,21 +1109,6 @@ cd lambda</code></pre>
   }
 
   function showGuide() {
-    let main = -1, bestDist = Infinity;
-    clickableEggs.forEach((p, i) => {
-      const d = (p.x - W / 2) * (p.x - W / 2) + (p.y - H / 2) * (p.y - H / 2);
-      if (d < bestDist) { bestDist = d; main = i; }
-    });
-
-    markers.innerHTML = '';
-    clickableEggs.forEach((p, i) => {
-      const el = document.createElement('div');
-      el.className = i === main ? 'spot main' : 'spot';
-      el.style.left = p.x + 'px';
-      el.style.top = p.y + 'px';
-      markers.appendChild(el);
-    });
-
     guide.classList.remove('hide');
     requestAnimationFrame(() => guide.classList.add('show'));
     setTimeout(start, GUIDE_AUTO_MS);
