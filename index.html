@@ -632,6 +632,9 @@ html, body {
   line-height: 1.65;
 }
 #page-body th { font-weight: 600; }
+/* 宽表格：手机上横向滚，不挤成一行几个字 */
+#page-body .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+#page-body .table-wrap table.wide { min-width: 460px; }
 #page-link {
   display: inline-block;
   margin-top: 28px;
@@ -890,7 +893,7 @@ cd lambda</code></pre>
 <h2>依赖</h2>
 <p>仅 Pillow (<code>pip install Pillow</code>)。无需 NumPy、scikit-image 等其他库。</p>
 <h2>参数说明</h2>
-<table><thead><tr><th>参数</th><th>类型</th><th>默认</th><th>说明</th></tr></thead><tbody><tr><td><code>input</code></td><td>positional</td><td>—</td><td>输入图片路径</td></tr><tr><td><code>output</code></td><td>positional</td><td>—</td><td>输出 PNG 路径</td></tr><tr><td><code>--grid</code></td><td>int</td><td>12</td><td>网格间距（像素）</td></tr><tr><td><code>--style</code></td><td>enum</td><td>solid</td><td>solid / outline / both</td></tr><tr><td><code>--invert</code></td><td>flag</td><td>false</td><td>反相灰度映射</td></tr><tr><td><code>--gamma</code></td><td>float</td><td>none</td><td>Gamma 校正值（0.1-5.0），必须显式设置</td></tr><tr><td><code>--seed</code></td><td>int</td><td>auto</td><td>随机种子（both 模式下确定网点描边分配）</td></tr><tr><td><code>--no-blur</code></td><td>flag</td><td>false</td><td>关闭高斯模糊预处理</td></tr><tr><td><code>--color</code></td><td>flag</td><td>false</td><td>彩色半调：网点使用原图颜色</td></tr><tr><td><code>--jitter</code></td><td>float</td><td>0.0</td><td>圆心抖动比例（0.0-1.0），打破大色块摩尔纹</td></tr><tr><td><code>--outline-ratio</code></td><td>float</td><td>0.5</td><td>both 样式描边网点比例（0.0-1.0）</td></tr><tr><td><code>--circumscribe</code></td><td>flag</td><td>false</td><td>外接圆（grid/√2），消除深色大色块四角空白</td></tr><tr><td><code>--bg</code></td><td>str</td><td>255,238,221</td><td>画布背景色（R,G,B 或 #RRGGBB）</td></tr><tr><td><code>--dot</code></td><td>str</td><td>17,51,85</td><td>单色模式网点色（R,G,B 或 #RRGGBB）</td></tr></tbody></table>
+<div class="table-wrap"><table class="wide"><thead><tr><th>参数</th><th>类型</th><th>默认</th><th>说明</th></tr></thead><tbody><tr><td><code>input</code></td><td>positional</td><td>—</td><td>输入图片路径</td></tr><tr><td><code>output</code></td><td>positional</td><td>—</td><td>输出 PNG 路径</td></tr><tr><td><code>--grid</code></td><td>int</td><td>12</td><td>网格间距（像素）</td></tr><tr><td><code>--style</code></td><td>enum</td><td>solid</td><td>solid / outline / both</td></tr><tr><td><code>--invert</code></td><td>flag</td><td>false</td><td>反相灰度映射</td></tr><tr><td><code>--gamma</code></td><td>float</td><td>none</td><td>Gamma 校正值（0.1-5.0），必须显式设置</td></tr><tr><td><code>--seed</code></td><td>int</td><td>auto</td><td>随机种子（both 模式下确定网点描边分配）</td></tr><tr><td><code>--no-blur</code></td><td>flag</td><td>false</td><td>关闭高斯模糊预处理</td></tr><tr><td><code>--color</code></td><td>flag</td><td>false</td><td>彩色半调：网点使用原图颜色</td></tr><tr><td><code>--jitter</code></td><td>float</td><td>0.0</td><td>圆心抖动比例（0.0-1.0），打破大色块摩尔纹</td></tr><tr><td><code>--outline-ratio</code></td><td>float</td><td>0.5</td><td>both 样式描边网点比例（0.0-1.0）</td></tr><tr><td><code>--circumscribe</code></td><td>flag</td><td>false</td><td>外接圆（grid/√2），消除深色大色块四角空白</td></tr><tr><td><code>--bg</code></td><td>str</td><td>255,238,221</td><td>画布背景色（R,G,B 或 #RRGGBB）</td></tr><tr><td><code>--dot</code></td><td>str</td><td>17,51,85</td><td>单色模式网点色（R,G,B 或 #RRGGBB）</td></tr></tbody></table></div>
 <h2>限制与已知问题</h2>
 <ul><li>不支持 GIF/动画。静态帧仅。</li><li>输入文件必须是 Pillow 支持读取的格式（PNG/JPG/BMP/TIFF/WebP 等）。</li><li>超大图片（如 10000x10000px）处理时间较长，因为逐点遍历所有网格。</li><li>Antialiasing 依赖于 Pillow 内部实现，不同版本行为可能有微小差异。</li></ul>`;
 
