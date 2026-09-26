@@ -1066,7 +1066,6 @@ cd lambda</code></pre>
   }
 
   // 可点击的彩蛋星
-  let clickableEggs = [];
   let startTime = null;
   let lastTime = null;
   let uiShown = false;
@@ -1084,9 +1083,11 @@ cd lambda</code></pre>
   }
 
   function eggInCenter() {
-    return clickableEggs.some((p) =>
-      Math.abs(p.x - W / 2) < W * 0.22 && Math.abs(p.y - H / 2) < H * 0.22
-    );
+    return stars.some((s) => {
+      if (!s.isEasterEgg || !s.trail.length) return false;
+      const p = s.trail[s.trail.length - 1];
+      return Math.abs(p.x - W / 2) < W * 0.22 && Math.abs(p.y - H / 2) < H * 0.22;
+    });
   }
 
   function loop(timestamp) {
@@ -1100,8 +1101,6 @@ cd lambda</code></pre>
 
     // 完全清除画布
     ctx.clearRect(0, 0, W, H);
-
-    clickableEggs = [];
 
     for (const s of stars) {
       if (elapsed < s.delay) continue;
@@ -1160,11 +1159,6 @@ cd lambda</code></pre>
         ctx.fillStyle = s.color;
         ctx.fill();
       }
-
-      // 蓝星：外表和普通星一样，只是颜色不同，但要可点
-      if (s.isEasterEgg && len > 0) {
-        clickableEggs.push({ x: s.trail[len - 1].x, y: s.trail[len - 1].y });
-      }
     }
 
     ctx.globalAlpha = 1;
@@ -1195,11 +1189,16 @@ cd lambda</code></pre>
     const mx = clientX - rect.left;
     const my = clientY - rect.top;
 
-    for (const egg of clickableEggs) {
-      const dx = mx - egg.x;
-      const dy = my - egg.y;
-      if (dx * dx + dy * dy < 400) {  // 20px 容差
-        return true;
+    // 从手指落下到 click 派发有几十~几百毫秒，星星早跑掉了，
+    // 所以拿它最近 0.5s 的轨迹一起判命中（也顺手让它变成一条能点的蓝线）
+    for (const s of stars) {
+      if (!s.isEasterEgg) continue;
+      for (let i = s.trail.length - 1; i >= 0; i--) {
+        const p = s.trail[i];
+        if (p.age > 0.5) break;
+        const dx = mx - p.x;
+        const dy = my - p.y;
+        if (dx * dx + dy * dy < 400) return true;   // 20px 容差
       }
     }
     return false;
