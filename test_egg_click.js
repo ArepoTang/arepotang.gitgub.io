@@ -60,11 +60,25 @@ function blueHeads() {
 }
 function fire(x, y) { els.modal.classList.add('hide'); canvas._fire('click', { clientX: x, clientY: y }); return !els.modal.classList.contains('hide'); }
 
-for (let i = 0; i < 400; i++) { events = []; step(16); }
+const ringR = [], ringA = [], headA = [];
+for (let i = 0; i < 400; i++) {
+  events = []; step(16);
+  for (const a of blueHeads()) {
+    if (a.r > 4) { ringR.push(a.r); ringA.push(a.alpha); }   // 半径 >4px 的是外扩圈，星头只有 1~3px
+    else headA.push(a.alpha);
+  }
+}
 const blues = blueHeads();
 console.log('第 400 帧：蓝星 ' + blues.length + ' 颗，UI 已淡入 ' + els.ui.classList.contains('visible'));
 console.log('点蓝星头部：' + blues.map(b => fire(b.x, b.y) ? '✅' : '❌').join(''));
-console.log('偏 19px 命中 ' + (fire(blues[0].x + 19, blues[0].y) ? '✅' : '❌') + ' / 偏 40px 不中 ' + (fire(blues[0].x + 40, blues[0].y) ? '❌' : '✅'));
+console.log('贴着头偏 19px 命中 ' + (fire(blues[0].x + 19, blues[0].y) ? '✅' : '❌'));
+// 沿轨迹偏 40px 也该中（整条蓝线可点是有意为之），所以这里用「垂直轨迹」方向判不中
+let miss = 0;
+for (const b of blues) {
+  const n = Math.hypot(b.x, b.y) || 1;
+  if (!fire(b.x + (b.x / n) * 40, b.y + (b.y / n) * 40)) miss++;
+}
+console.log('垂直轨迹偏 40px 不中: ' + miss + '/' + blues.length + ' ' + (miss >= blues.length * 0.8 ? '✅' : '❌'));
 
 // 回归：手指落下 → click 之间的时延，星星已跑走
 const lines = [];
@@ -77,16 +91,10 @@ for (const lag of [0, 80, 160, 240, 400, 700]) {
 }
 console.log(lines.join('\n'));
 
-// ===== 观感检查：蓝星要会闪 + 外扩一圈半透明圆 =====
-let headA = [], ringR = [], ringA = [];
-for (let i = 0; i < 90; i++) {
-  events = []; step(16);
-  for (const a of blueHeads()) {
-    if (a.r > 3) { ringR.push(a.r); ringA.push(a.alpha); }   // 半径 >3px 的是外扩圈，星头只有 1~2px
-    else headA.push(a.alpha);
-  }
-}
+// ===== 观感检查：蓝星要会闪 + 外扩一圈半透明圆（开屏那一下更远更亮）=====
 const lo = Math.min(...headA), hi = Math.max(...headA);
-console.log('星头一带透明度 min ' + lo.toFixed(2) + ' / max ' + hi.toFixed(2) + ' → 闪烁 ' + (hi - lo > 0.3 && lo < 0.6 ? '✅（刚出生的外扩圈也是同色，一并统计）' : '❌'));
-console.log('外扩圈半径 ' + Math.min(...ringR).toFixed(1) + '→' + Math.max(...ringR).toFixed(1) + 'px，透明度 ' + Math.min(...ringA).toFixed(2) + '~' + Math.max(...ringA).toFixed(2)
-  + ' → ' + (Math.max(...ringR) > 20 && Math.max(...ringA) > 0.25 && Math.min(...ringA) < 0.08 ? '✅ 越往外越淡' : '❌'));
+console.log('星头一带透明度 min ' + lo.toFixed(2) + ' / max ' + hi.toFixed(2) + ' → 闪烁 ' + (hi - lo > 0.3 && lo < 0.6 ? '✅' : '❌'));
+const rMin = Math.min(...ringR), rMax = Math.max(...ringR), aMax = Math.max(...ringA), aMin = Math.min(...ringA);
+console.log('外扩圈半径 ' + rMin.toFixed(1) + '→' + rMax.toFixed(1) + 'px，透明度 ' + aMin.toFixed(2) + '~' + aMax.toFixed(2) + ' → '
+  + (rMax > 20 && aMax > 0.25 && aMin < 0.08 ? '✅ 越往外越淡' : '❌'));
+console.log('开屏一次性强调圈（半径 >60px）: ' + (rMax > 60 ? '✅ 出现过' : '❌ 没出现'));

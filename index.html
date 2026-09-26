@@ -1040,6 +1040,9 @@ cd lambda</code></pre>
   const INTRO_MS = 1200;       // 蓝星扫进屏幕中部之后，再演多久才进入可交互
   const RIPPLE_SEC = 1.6;      // 蓝星每隔这么久外扩一圈半透明圆
   const RIPPLE_MAX = 26;       // 外扩到最大再加这么多 px
+  const HINT_SEC = 1.8;        // 开屏那一下「这个能点」强调持续多久
+  const HINT_RING = 90;        // 强调圈最大半径比星头大多少 px
+  const HINT_GROW = 0.35;      // 星头放大回落的时长（秒）
   const STAR_DELAY_MS = 900;   // 各星推迟出现的最大延迟
 
   // 随机挑 2~3 颗当蓝星，强制包含第 0 颗 → 不会整轮没蓝星
@@ -1078,6 +1081,8 @@ cd lambda</code></pre>
   let phase = 'intro';
   let centerAt = 0;   // 蓝星首次扫进屏幕中部的时刻（计时从这里才开始）
   let liveAt = 0;
+  let hintStar = null;  // 就是那颗扫进中部的蓝星：给它一次「能点」的强调
+  let hintAt = 0;
 
   function start() {
     if (phase !== 'intro') return;
@@ -1086,12 +1091,13 @@ cd lambda</code></pre>
     liveAt = (lastTime - startTime) / 1000;
   }
 
-  function eggInCenter() {
-    return stars.some((s) => {
+  // 扫进屏幕中部的蓝星（没有则 null）：开屏计时与一次性强调都用这个信号
+  function centerEgg() {
+    return stars.find((s) => {
       if (!s.isEasterEgg || !s.trail.length) return false;
       const p = s.trail[s.trail.length - 1];
       return Math.abs(p.x - W / 2) < W * 0.22 && Math.abs(p.y - H / 2) < H * 0.22;
-    });
+    }) || null;
   }
 
   function loop(timestamp) {
@@ -1167,12 +1173,27 @@ cd lambda</code></pre>
         ctx.fill();
       }
 
+      // --- 开屏那一下强调：被选中的蓝星，一圈大光圈 + 星头短暂放大 ---
+      const hint = s === hintStar ? (elapsed - hintAt) / HINT_SEC : 1;
+      if (hint < 1 && hint >= 0 && len > 0) {
+        const p = s.trail[len - 1];
+        ctx.globalAlpha = (1 - hint) * 0.45;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, s.size + hint * HINT_RING, 0, Math.PI * 2);
+        ctx.fillStyle = EASTER_EGG_COLOR;
+        ctx.fill();
+      }
+      // 前 HINT_GROW 秒星头撑到 2.2 倍再回落
+      const grow = s === hintStar && hint >= 0 && hint < HINT_GROW / HINT_SEC
+        ? 1 + 1.2 * (1 - hint / (HINT_GROW / HINT_SEC))
+        : 1;
+
       // --- 当前点发光 ---
       if (len > 0) {
         const p = s.trail[len - 1];
         ctx.globalAlpha = blink;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, s.size * 1.2, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, s.size * 1.2 * grow, 0, Math.PI * 2);
         ctx.fillStyle = s.color;
         ctx.fill();
       }
@@ -1182,7 +1203,10 @@ cd lambda</code></pre>
 
     // 蓝星一到屏幕中部才开始计时，演够 INTRO_MS 就进入可交互
     if (phase === 'intro') {
-      if (!centerAt && eggInCenter()) centerAt = elapsed;
+      if (!centerAt) {
+        const s = centerEgg();
+        if (s) { centerAt = elapsed; hintStar = s; hintAt = elapsed; }
+      }
       if (centerAt && elapsed - centerAt >= INTRO_MS / 1000) start();
     }
 
