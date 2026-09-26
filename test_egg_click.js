@@ -35,7 +35,12 @@ const ctx = new Proxy(t, {
 
 const canvas = mkEl('canvas');
 canvas.getContext = () => ctx;
-global.document = { getElementById: (id) => els[id] || mkEl(id), createElement: () => mkEl('new'), addEventListener() {} };
+const created = [];
+global.document = {
+  getElementById: (id) => els[id] || mkEl(id),
+  createElement: () => { const el = mkEl('new-' + created.length); created.push(el); return el; },
+  addEventListener() {},
+};
 global.window = { innerWidth: 400, innerHeight: 800, devicePixelRatio: 1, addEventListener() {} };
 global.location = { hash: '' };
 let now = 0, queue = [];
@@ -111,6 +116,13 @@ const rMax = Math.max(...ringR), aMax = Math.max(...ringA), aMin = Math.min(...r
 check('外扩圈半径够远且越来越淡', rMax > 20 && aMax > 0.25 && aMin < 0.08,
   Math.min(...ringR).toFixed(1) + '→' + rMax.toFixed(1) + 'px, alpha ' + aMin.toFixed(2) + '~' + aMax.toFixed(2));
 check('开屏一次性强调圈出现过（半径 >60px）', rMax > 60);
+
+// 项目导航：Phi 的 Neo 角标（时间闸门：2026-10-16 零点起不再显示）
+created.length = 0;
+els['float-btn']._fire('click', {});
+const hasNeo = created.some((el) => el.className === 'badge' && el.textContent === 'Neo');
+const wantNeo = Date.now() < new Date(2026, 9, 16).getTime();
+check('Phi 的 Neo 角标与时间闸门一致', hasNeo === wantNeo, 'now < 2026-10-16 = ' + wantNeo);
 
 console.log('\n' + (fails ? '❌ ' + fails + ' 项不通过' : '✅ 全部通过'));
 process.exit(fails ? 1 : 0);

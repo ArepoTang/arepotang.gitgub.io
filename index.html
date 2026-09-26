@@ -220,6 +220,20 @@ html, body {
 }
 #modal-list a:hover { background: rgba(79,195,247,0.1); }
 #modal-list .item-name { font-size: 15px; letter-spacing: 0.5px; line-height: 1.6; white-space: pre-line; }
+/* 角标（如 Phi 旁边的 Neo） */
+#modal-list .badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid rgba(79,195,247,0.45);
+  background: rgba(79,195,247,0.12);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 1px;
+  vertical-align: 2px;
+  color: #bfe6ff;
+}
 #modal-list .item-desc {
   font-size: 12px;
   font-weight: 300;
@@ -613,7 +627,7 @@ html, body {
   <!-- 社交链接已移除 -->
 </div>
 
-<div id="hint" role="status">看蓝星</div>
+<div id="hint" role="status">蓝色的流星？！</div>
 
 <button id="float-btn" aria-label="菜单"></button>
 
@@ -853,7 +867,8 @@ cd lambda</code></pre>
 
   // 汉堡菜单的内容；body 是详情页正文的 HTML 片段（直接写标签，如 <button class="btn">）
   const PROJECTS = [
-    { id: 'phi',     text: 'Phi',     desc: 'Epsilob和Lambda移动端移植',    href: '', theme: 'cardboard', body: PHI_HTML },
+    // Neo 角标：到 2026-10-16 零点（本机时区）就自动不再显示
+    { id: 'phi',     text: 'Phi',     desc: 'Epsilob和Lambda移动端移植',    href: '', theme: 'cardboard', body: PHI_HTML, badge: Date.now() < new Date(2026, 9, 16).getTime() ? 'Neo' : '' },
     { id: 'lambda',  text: 'lambda',  desc: 'halftone 命令行', href: '', theme: 'halftone', body: LAMBDA_HTML },
     { id: 'epsilon', text: 'epsilon', desc: 'poster 命令行',   href: '', theme: 'newspaper', body: EPSILON_HTML },
   ];
@@ -929,6 +944,12 @@ cd lambda</code></pre>
       const name = document.createElement('div');
       name.className = 'item-name';
       name.textContent = item.text;
+      if (item.badge) {
+        const badge = document.createElement('span');
+        badge.className = 'badge';
+        badge.textContent = item.badge;
+        name.appendChild(badge);
+      }
       a.appendChild(name);
 
       if (item.desc) {
@@ -951,6 +972,7 @@ cd lambda</code></pre>
     openModal('项目导航', PROJECTS.map((p) => ({
       text: p.text,
       desc: p.desc,
+      badge: p.badge,
       hash: '#' + p.id,
     })));
   }
@@ -1065,7 +1087,7 @@ cd lambda</code></pre>
   const HINT_SEC = 1.8;        // 开屏那一下「这个能点」强调持续多久
   const HINT_RING = 90;        // 强调圈最大半径比星头大多少 px
   const HINT_GROW = 0.35;      // 星头放大回落的时长（秒）
-  const HINT_TEXT_MS = 4000;   // 顶部「看蓝星」停留多久
+  const HINT_TEXT_MS = 1500;   // 顶部「看蓝星」停留多久
   const STAR_DELAY_MS = 900;   // 各星推迟出现的最大延迟
 
   // 随机挑 2~3 颗当蓝星，强制包含第 0 颗 → 不会整轮没蓝星
